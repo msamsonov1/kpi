@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>700/800 MHz RF EMS KPI Master Reference (100 KPIs)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            telecom: {
+              50: '#f0f9ff',
+              500: '#0284c7',
+              900: '#0c4a6e',
+              950: '#082f49',
+            },
+            rfcyan: '#06b6d4',
+            rfgreen: '#10b981',
+            rfamber: '#f59e0b',
+            rfpurple: '#8b5cf6',
+            rfrose: '#f43f5e',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars for NOC aesthetic */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    .grid-glow {
+      background-image: radial-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased grid-glow selection:bg-cyan-500 selection:text-black">
+
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 text-white font-black text-xl tracking-wider">
+          RF
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-slate-100 leading-tight">700 / 800 MHz EMS KPI Directory</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold bg-cyan-950 text-cyan-400 border border-cyan-800/80 rounded-full">100 Indicators</span>
+          </div>
+          <p class="text-xs text-slate-400">Low-Band (B12, B13, B14, B20, B28, B5, n28, n71) Element Management System PM Standards</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Counters -->
+      <div class="flex items-center gap-2 sm:gap-4 text-xs font-mono">
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5 flex flex-col items-start">
+          <span class="text-slate-400 text-[10px] uppercase">Carrier Bands</span>
+          <span class="text-cyan-400 font-semibold">700/850 MHz</span>
+        </div>
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5 flex flex-col items-start">
+          <span class="text-slate-400 text-[10px] uppercase">Standard</span>
+          <span class="text-emerald-400 font-semibold">3GPP Rel 15/16/17</span>
+        </div>
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5 flex flex-col items-start">
+          <span class="text-slate-400 text-[10px] uppercase">Active Filter</span>
+          <span id="statActiveCount" class="text-amber-400 font-semibold">100 Shown</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full flex flex-col">
+    <!-- Filter and Search Header -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 shadow-xl backdrop-blur-sm">
+      <div class="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
+        <!-- Search Input -->
+        <div class="relative flex-1">
+          <svg class="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search acronym (e.g., RSRP, RTWP, VSWR), description, or category..."
+            class="w-full bg-slate-950 border border-slate-700/70 text-slate-100 text-sm rounded-xl pl-11 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all placeholder:text-slate-500"
+          >
+          <button id="clearSearchBtn" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <!-- Quick Tips Indicator -->
+        <div class="flex items-center gap-2 text-xs text-slate-400 px-2 py-1">
+          <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          <span>Tap any KPI card to open 3-sentence technical diagnosis & schematic</span>
+        </div>
+      </div>
+
+      <!-- Categories Pills -->
+      <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-800/80" id="categoryContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <div id="kpiList" class="grid grid-cols-1 md:grid-cols-2 gap-3.5 flex-1">
+      <!-- 100 KPI items injected dynamically -->
+    </div>
+
+    <!-- Empty state message -->
+    <div id="noResults" class="hidden text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800">
+      <div class="w-16 h-16 mx-auto mb-3 text-slate-600">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </div>
+      <h3 class="text-base font-semibold text-slate-300">No matching 700/800 MHz KPIs found</h3>
+      <p class="text-sm text-slate-500 mt-1">Try another search keyword or reset the category filter.</p>
+      <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs font-semibold transition-colors">Reset All Filters</button>
+    </div>
+  </main>
+
+  <div id="kpiModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden transform scale-95 transition-transform duration-200">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-start justify-between bg-slate-900/90">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2.5">
+            <span id="modalAcronymBadge" class="px-2.5 py-0.5 text-xs font-mono font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 rounded-md"></span>
+            <span id="modalCategoryBadge" class="px-2 py-0.5 text-[11px] font-medium bg-slate-800 text-slate-300 rounded-md"></span>
+            <span id="modalIdBadge" class="text-xs font-mono text-slate-500">#001</span>
+          </div>
+          <h2 id="modalTitle" class="text-lg sm:text-xl font-bold text-white leading-snug"></h2>
+        </div>
+        <button id="modalCloseBtn" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-5 text-slate-200">
+        <!-- 3-Sentence Technical Breakdown for 700/800MHz -->
+        <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+          <h3 class="text-xs uppercase tracking-wider font-semibold text-cyan-400 mb-2 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            700/800 MHz In-Depth Operational Diagnosis (3 Sentences)
+          </h3>
+          <div id="modal3Sentences" class="space-y-2 text-sm leading-relaxed text-slate-300">
+            <!-- 3 sentences injected here -->
+          </div>
+        </div>
+
+        <!-- Schematic Visual Component -->
+        <div>
+          <h3 class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2.5 flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            RF Engineering Schematic & Signal Representation
+          </h3>
+          <div id="modalSchematicContainer" class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-center min-h-[170px] overflow-hidden">
+            <!-- Dynamic SVG Schematic rendered here -->
+          </div>
+        </div>
+
+        <!-- Telecom EMS Operational Benchmarks & Formula Box -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-lg p-3">
+            <span class="text-slate-500 block mb-1 uppercase tracking-wide">Target Benchmark (700/800 MHz)</span>
+            <span id="modalTarget" class="text-emerald-400 font-semibold text-sm"></span>
+          </div>
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-lg p-3">
+            <span class="text-slate-500 block mb-1 uppercase tracking-wide">Standard 3GPP PM Formula / Counter</span>
+            <span id="modalFormula" class="text-slate-300 font-mono text-[11px] break-all"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-xs">
+        <span class="text-slate-500">Source: 3GPP TS 32.425 / 36.314 / 38.314 EMS PM</span>
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium transition-colors">
+          Dismiss Preview
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const KPI_DATABASE = [
+      // 1-10: Coverage & Signal Propagation
+      {
+        id: 1,
+        code: "RSRP",
+        name: "Reference Signal Received Power",
+        category: "Coverage",
+        sentence: "<strong>RSRP</strong> quantifies the average received linear power of LTE/NR cell-specific resource elements across 700/800 MHz low-band carriers.",
+        sentences3: [
+          "In 700/800 MHz deployments, RSRP extends significantly further into rural footprints and dense urban concrete building cores compared to mid-band layers.",
+          "EMS alarms flag when cell-edge RSRP drops below -115 dBm, initiating intra-frequency measurement gaps or high-band offloading.",
+          "Maintaining an RSRP above -95 dBm in low-band guarantees reliable VoLTE/VoNR QCI-1 voice continuity during deep building penetration."
+        ],
+        schematicType: "curve",
+        target: "> -105 dBm (Rural) / > -95 dBm (Indoor)",
+        formula: "10 * log10(avg(RE_Power_in_mW))"
+      },
+      {
+        id: 2,
+        code: "RSRQ",
+        name: "Reference Signal Received Quality",
+        category: "Coverage",
+        sentence: "<strong>RSRQ</strong> evaluates signal quality by calculating the ratio of RSRP to total low-band Received Signal Strength across the entire channel.",
+        sentences3: [
+          "Because 700/800 MHz signals propagate over vast distances, inter-site low-band interference frequently suppresses RSRQ even when RSRP appears adequate.",
+          "EMS systems track poor RSRQ (< -15 dB) to identify pilot pollution where overlapping 700 MHz sector lobes degrade spectral efficiency.",
+          "Optimal RSRQ between -8 dB and -11 dB ensures lower modulation error rates and stable radio link management."
+        ],
+        schematicType: "sinr",
+        target: "≥ -12 dB (Optimal: -8 dB to -10 dB)",
+        formula: "(N * RSRP) / RSSI [where N = PRB count]"
+      },
+      {
+        id: 3,
+        code: "RSSI",
+        name: "Received Signal Strength Indicator",
+        category: "Coverage",
+        sentence: "<strong>RSSI</strong> measures total wideband carrier power including serving cell reference signals, co-channel interference, and thermal background noise.",
+        sentences3: [
+          "In 700/800 MHz frequencies, elevated RSSI without proportional RSRP indicates severe external RF ingress or co-channel television harmonic leakage.",
+          "EMS monitors RSSI fluctuations across 24-hour cycles to correlate environmental noise surges with industrial and broadcast activity.",
+          "A nominal idle-channel RSSI should remain close to thermal noise plus the base station low-noise amplifier figure (-105 to -100 dBm)."
+        ],
+        schematicType: "spectrum",
+        target: "-100 dBm to -65 dBm (Normal RF environment)",
+        formula: "P_serving + P_interference + P_noise"
+      },
+      {
+        id: 4,
+        code: "SINR",
+        name: "Signal-to-Interference-plus-Noise Ratio",
+        category: "Coverage",
+        sentence: "<strong>SINR</strong> indicates true radio channel quality by comparing desired low-band reference symbol energy directly against interfering power and noise.",
+        sentences3: [
+          "700/800 MHz low-band cells operate under elevated co-channel interference due to low path-loss over distant neighboring towers.",
+          "EMS algorithms correlate SINR degradation with Downlink Modulation and Coding Scheme (MCS) downshifts, dropping user throughput from 64QAM down to QPSK.",
+          "A minimum SINR threshold of 0 dB is strictly required for stable VoLTE signaling, while > 15 dB is targeted for peak throughput."
+        ],
+        schematicType: "sinr",
+        target: "≥ 12 dB (Target) / > 0 dB (Minimum Voice)",
+        formula: "S / (I + N)"
+      },
+      {
+        id: 5,
+        code: "TA",
+        name: "Timing Advance Distribution",
+        category: "Coverage",
+        sentence: "<strong>TA</strong> tracks propagation delay between the base station and user equipment to compute the physical geographic distance radius of connected subscribers.",
+        sentences3: [
+          "Because 700/800 MHz cell sites routinely service cell radii beyond 15 to 30 kilometers, TA distributions span upper delay index boundaries.",
+          "EMS systems categorize TA bins to identify overshooting cells that introduce late handovers and unnecessary uplink interference into neighbor clusters.",
+          "Anomalously high TA counts with high drop rates prompt RF engineers to increase physical antenna downtilt on macro towers."
+        ],
+        schematicType: "distance",
+        target: "< 5 km (Urban) / < 25 km (Extended Rural)",
+        formula: "Distance ≈ (TA_index * 16 * Ts * c) / 2"
+      },
+      {
+        id: 6,
+        code: "PL",
+        name: "Downlink Path Loss",
+        category: "Coverage",
+        sentence: "<strong>PL</strong> measures electromagnetic attenuation between base station transmit antenna reference ports and the user receiver in decibels.",
+        sentences3: [
+          "700/800 MHz signals benefit from approximately 10 to 12 dB lower free-space and diffraction path loss compared to mid-band 2.1 GHz carriers.",
+          "EMS analyzes calculated path loss against Timing Advance to detect foliage penetration loss, mountain diffraction, or severe building penetration hurdles.",
+          "Path loss reports dictate open-loop uplink power control settings for subscriber mobile units transmitting back to the low-band tower."
+        ],
+        schematicType: "curve",
+        target: "< 125 dB (Suburban) / < 140 dB (Rural Edge)",
+        formula: "eNB_Tx_Power (dBm) - Filtered_RSRP (dBm)"
+      },
+      {
+        id: 7,
+        code: "IDR",
+        name: "Indoor Coverage Penetration Delta",
+        category: "Coverage",
+        sentence: "<strong>IDR</strong> evaluates the signal attenuation difference between outdoor street-level reference drive measurements and indoor penetration depths.",
+        sentences3: [
+          "The 700/800 MHz spectrum serves as the primary national anchor for indoor coverage due to its long wavelength easily traversing glass and brick.",
+          "EMS monitors indoor coverage quality through MDT (Minimization of Drive Tests) subscriber logs to verify baseline public safety levels.",
+          "Maintaining an IDR penalty under 18 dB ensures high-priority FirstNet (Band 14) and commercial VoLTE sessions survive deep indoors."
+        ],
+        schematicType: "indoor",
+        target: "Indoor RSRP > -105 dBm (Delta < 18 dB)",
+        formula: "RSRP_Outdoor_Average - RSRP_Indoor_MDT"
+      },
+      {
+        id: 8,
+        code: "CERP",
+        name: "Cell Edge RSRP Proportion",
+        category: "Coverage",
+        sentence: "<strong>CERP</strong> calculates the percentage of connected low-band subscribers experiencing marginal signal strength near the coverage boundary.",
+        sentences3: [
+          "Due to expansive low-band propagation footprints, 700/800 MHz cells tend to carry an unusually high percentage of edge-stationed subscribers.",
+          "EMS dashboards alert when CERP exceeds 15%, warning operators of imminent handover failures, power headroom exhaustion, and RRC drops.",
+          "Network planners resolve high CERP by optimizing remote electrical tilt (RET) or augmenting coverage with small cell underlays."
+        ],
+        schematicType: "curve",
+        target: "< 10% of total connected users",
+        formula: "(Count(UE_RSRP < -115 dBm) / Total_UEs) * 100"
+      },
+      {
+        id: 9,
+        code: "CQI",
+        name: "Channel Quality Indicator Distribution",
+        category: "Coverage",
+        sentence: "<strong>CQI</strong> reports user equipment radio conditions on a 1-to-15 scale determining adaptive modulation rates on low-band downlinks.",
+        sentences3: [
+          "700/800 MHz cells strive to maintain high CQI (> 10) to permit 64QAM and 256QAM downlink modulation across limited 5MHz or 10MHz carrier bandwidths.",
+          "EMS logs reporting a skewed distribution toward CQI 1-6 indicate pervasive inter-cell interference or severe multipath delay spread.",
+          "Base station schedulers use continuous CQI updates to dynamically assign physical resource blocks with optimal coding redundancy."
+        ],
+        schematicType: "sinr",
+        target: "CQI ≥ 7 in > 85% of samples; Average CQI > 9.5",
+        formula: "3GPP TS 36.213 4-bit feedback index (1-15)"
+      },
+      {
+        id: 10,
+        code: "OSR",
+        name: "Low-Band Over-Shooter Ratio",
+        category: "Coverage",
+        sentence: "<strong>OSR</strong> tracks low-band sectors whose signals travel beyond designated design polygons to cause interference inside distant neighbor cells.",
+        sentences3: [
+          "Sub-1GHz electromagnetic waves suffer minimal atmospheric absorption, making 700/800 MHz antennas prone to overshoot 30+ miles during ducting.",
+          "EMS cross-correlates neighbor cell RSRP reports to identify rogue sectors that serve subscribers far past their planned inter-site distance.",
+          "Corrective actions require adjusting antenna downtilts, reducing base station transmit power, or re-orienting azimuth patterns."
+        ],
+        schematicType: "distance",
+        target: "< 5% overshooting instances",
+        formula: "(Overshooting_Samples / Total_Drive_Samples) * 100"
+      },
+
+      // 11-20: Accessibility & Random Access
+      {
+        id: 11,
+        code: "RRC_SR",
+        name: "RRC Connection Setup Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>RRC_SR</strong> measures the percentage of attempted Radio Resource Control signaling connections successfully established between mobile devices and the low-band base station.",
+        sentences3: [
+          "As the fundamental baseline accessibility KPI, RRC_SR in 700/800 MHz confirms users can lock onto the control plane across wide cell radii.",
+          "Failures in EMS typically point to uplink RACH preamble collisions, high Uplink RSSI noise floor, or base station signaling processor congestion.",
+          "Carrier grade networks mandate that low-band 700/800 MHz RRC_SR consistently exceed 99.5% under peak traffic hours."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.5%",
+        formula: "(Successful_RRC_Setups / Attempted_RRC_Setups) * 100"
+      },
+      {
+        id: 12,
+        code: "PRACH_SR",
+        name: "PRACH Preamble Detection Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>PRACH_SR</strong> quantifies the proportion of physical random access preambles transmitted by mobile devices that are detected by the tower receiver.",
+        sentences3: [
+          "In 700/800 MHz macro cells covering vast geographic distances, distant UEs frequently exhaust transmit power reaching the tower on the random access channel.",
+          "EMS monitors PRACH detection to tune preamble format configurations, root sequence indexes, and zero-correlation zone lengths for large cell radii.",
+          "A dip below 98% indicates uplink interference from external jammers, passive intermodulation (PIM), or insufficient PRACH preamble power ramping."
+        ],
+        schematicType: "protocol",
+        target: "≥ 98.5%",
+        formula: "(Detected_PRACH_Preambles / Total_PRACH_Attempts) * 100"
+      },
+      {
+        id: 13,
+        code: "RACH_CR",
+        name: "RACH Contention Resolution Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>RACH_CR</strong> tracks how successfully the base station resolves identity collisions when multiple mobile devices access the low-band channel simultaneously.",
+        sentences3: [
+          "Because 700/800 MHz serves as the fallback coverage umbrella during mass gatherings, RACH contention spikes rapidly when hundreds of UEs connect at once.",
+          "EMS measures Msg4 contention resolution completions against Msg3 transmissions to quantify channel access bottlenecks.",
+          "Optimizing backoff indicator (BI) timers in the EMS parameter template prevents repeated preamble storms during local emergency events."
+        ],
+        schematicType: "protocol",
+        target: "≥ 97.0%",
+        formula: "(Successful_Msg4_Acks / Total_Msg3_Transmissions) * 100"
+      },
+      {
+        id: 14,
+        code: "M3_RET",
+        name: "Msg3 Retransmission Rate",
+        category: "Accessibility",
+        sentence: "<strong>M3_RET</strong> measures the frequency with which the Random Access RRC Connection Request (Msg3) must be resent due to uplink decode errors.",
+        sentences3: [
+          "In 700/800 MHz networks, Msg3 is particularly vulnerable because it relies on standard uplink power without full closed-loop compensation.",
+          "EMS alerts on high Msg3 retransmissions when uplink passive intermodulation (PIM) or distant co-channel interferers corrupt subcarriers.",
+          "Keeping M3_RET below 8% ensures swift call setup times and prevents premature random access exhaustion."
+        ],
+        schematicType: "protocol",
+        target: "< 8.0%",
+        formula: "(Msg3_Retransmissions / Total_Msg3_Attempts) * 100"
+      },
+      {
+        id: 15,
+        code: "ERAB_SR",
+        name: "E-RAB / DRB Setup Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>ERAB_SR</strong> evaluates the percentage of data radio bearers successfully activated to carry subscriber payload data over low-band channels.",
+        sentences3: [
+          "Following successful RRC handshakes, ERAB_SR validates that transport network layer resources and radio admission control approve the session.",
+          "In 700/800 MHz cells carrying 5MHz or 10MHz channels, admission control may reject non-priority ERABs during high PRB congestion.",
+          "EMS performance standards require ERAB_SR to exceed 99.2% for both best-effort internet (QCI 9) and public safety priority traffic."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.2%",
+        formula: "(Successfully_Established_ERABs / Attempted_ERABs) * 100"
+      },
+      {
+        id: 16,
+        code: "CSSR",
+        name: "Call Setup Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>CSSR</strong> provides a combined end-to-end accessibility metric measuring total success from initial radio access to active user data bearer assignment.",
+        sentences3: [
+          "CSSR represents the definitive user-experience benchmark across 700/800 MHz networks by combining RRC and E-RAB success factors.",
+          "In rural 700 MHz coverage cells, CSSR drops are primarily caused by uplink link budget exhaustion near distant coverage fringes.",
+          "Regulatory service-level agreements demand CSSR values above 99.0% across all macro low-band operating bands."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.0%",
+        formula: "RRC_SR * ERAB_SR"
+      },
+      {
+        id: 17,
+        code: "V_CSSR",
+        name: "VoLTE QCI-1 Setup Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>V_CSSR</strong> measures the setup success percentage for dedicated conversational voice bearers running across 700/800 MHz low-band carriers.",
+        sentences3: [
+          "Low-band 700/800 MHz spectrum represents the primary carrier for nationwide VoLTE voice coverage, especially when higher frequencies fade indoors.",
+          "EMS systems isolate QCI-1 setup attempts to guarantee that guaranteed bit-rate (GBR) acoustic connections are prioritized over background data.",
+          "A benchmark of > 99.5% ensures cellular voice calls establish seamlessly without subscriber-perceived call failure tones."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.5%",
+        formula: "(Successful_QCI1_Setups / Attempted_QCI1_Setups) * 100"
+      },
+      {
+        id: 18,
+        code: "EM_BSR",
+        name: "Emergency Bearer Setup Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>EM_BSR</strong> evaluates access success for emergency 911 calls and Band 14 (FirstNet) public safety high-priority radio bearers.",
+        sentences3: [
+          "700 MHz Band 14 and Band 12 networks enforce preemption algorithms that evict commercial users to guarantee emergency bearer setup.",
+          "EMS systems continuously monitor EM_BSR to ensure public safety first-responders receive immediate access even during high traffic.",
+          "The target for EM_BSR in any low-band operational cluster is strictly 99.99% under all operating scenarios."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.99%",
+        formula: "(Successful_Emergency_Bearers / Attempted_Emergency_Bearers) * 100"
+      },
+      {
+        id: 19,
+        code: "RRC_REJ",
+        name: "RRC Connection Rejection Rate",
+        category: "Accessibility",
+        sentence: "<strong>RRC_REJ</strong> measures the percentage of RRC connection requests actively denied by the low-band base station due to hardware or radio admission limits.",
+        sentences3: [
+          "Because 700/800 MHz cells cover broad geographic areas, emergency evacuation corridors or rush-hour jams can trigger radio admission rejection limits.",
+          "EMS alarms fire when RRC_REJ exceeds 0.5%, signaling that baseband processing licenses or PUCCH resources have become saturated.",
+          "Engineers alleviate low-band admission rejections by turning on connected-mode traffic steering to offload capable devices to mid-band layers."
+        ],
+        schematicType: "protocol",
+        target: "< 0.5%",
+        formula: "(Rejected_RRC_Requests / Total_RRC_Requests) * 100"
+      },
+      {
+        id: 20,
+        code: "S1_SR",
+        name: "S1/NG Control Plane Setup Success Rate",
+        category: "Accessibility",
+        sentence: "<strong>S1_SR</strong> monitors the stability and handshake completion rate across backhaul links connecting low-band base stations to the Evolved Packet Core or 5GC.",
+        sentences3: [
+          "Remote rural 700/800 MHz base stations often rely on microwave or long-haul fiber backhaul where transport jitter can impair S1-MME or NG-C handshakes.",
+          "EMS tracks SCTP link retransmissions and association restarts to prevent site-wide isolation and wide-area accessibility collapses.",
+          "Maintaining an S1/NG setup rate of 99.9% ensures that base station radio resources remain available to the core network."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.9%",
+        formula: "(Successful_S1_Setup_Resp / S1_Setup_Req) * 100"
+      },
+
+      // 21-30: Retainability & Drop Causes
+      {
+        id: 21,
+        code: "ERAB_DR",
+        name: "E-RAB Drop Rate",
+        category: "Retainability",
+        sentence: "<strong>ERAB_DR</strong> tracks the percentage of active data sessions terminated abnormally due to radio link failures or transport disruptions rather than normal user releases.",
+        sentences3: [
+          "In 700/800 MHz tiers, ERAB drops are dominated by subscribers traveling beyond the outer perimeter of the coverage footprint.",
+          "EMS logs correlate ERAB drops against low Uplink SINR and maximum Timing Advance values to pinpoint physical coverage holes.",
+          "Leading cellular operators enforce an ERAB Drop Rate ceiling under 0.6% on all low-band macro cells."
+        ],
+        schematicType: "sinr",
+        target: "< 0.6%",
+        formula: "(Abnormal_ERAB_Releases / (Normal_Releases + Abnormal_Releases)) * 100"
+      },
+      {
+        id: 22,
+        code: "V_CDR",
+        name: "VoLTE Call Drop Rate",
+        category: "Retainability",
+        sentence: "<strong>V_CDR</strong> quantifies the rate of dropped QCI-1 conversational voice sessions across 700/800 MHz low-band radio carriers.",
+        sentences3: [
+          "Low-band carriers provide the foundational voice safety net; a drop here generally results in a disconnected voice call for the subscriber.",
+          "EMS root-cause breakdowns isolate whether voice drops occur due to bad downlink RF, uplink power exhaustion, or missing neighbor cell definitions.",
+          "A high-quality telecom cluster strictly maintains VoLTE CDR below 0.40% to preserve customer satisfaction."
+        ],
+        schematicType: "sinr",
+        target: "< 0.40%",
+        formula: "(Abnormal_QCI1_Releases / Total_QCI1_Sessions) * 100"
+      },
+      {
+        id: 23,
+        code: "RLF_R",
+        name: "Radio Link Failure Rate",
+        category: "Retainability",
+        sentence: "<strong>RLF_R</strong> measures how frequently the mobile device loses synchronization with the 700/800 MHz physical layer after reaching out-of-sync counter thresholds.",
+        sentences3: [
+          "When consecutive out-of-sync indications (N310) trigger the T310 timer on 700/800 MHz, the user device declares Radio Link Failure.",
+          "EMS telemetry in low-band often associates RLF with sudden shadowing behind terrain obstacles or deep building interior basements.",
+          "Keeping RLF_R below 0.5% validates that handover parameters trigger before the serving radio link disintegrates."
+        ],
+        schematicType: "curve",
+        target: "< 0.50%",
+        formula: "(Total_RLF_Events / Total_Active_Connections) * 100"
+      },
+      {
+        id: 24,
+        code: "UL_OOS",
+        name: "Uplink Out-of-Sync Drop Proportion",
+        category: "Retainability",
+        sentence: "<strong>UL_OOS</strong> calculates the fraction of drops initiated because the low-band base station receiver stopped detecting subscriber sounding and PUCCH signals.",
+        sentences3: [
+          "700/800 MHz links are strictly uplink-limited because base stations transmit at 40-80W while handheld user devices peak at only 200mW (23 dBm).",
+          "EMS logs reveal that in large rural 700 MHz sectors, over 65% of all drops result from uplink loss rather than downlink coverage failure.",
+          "Mitigating UL_OOS drops requires deploying 4-way receiver diversity (4R) or tuning PUCCH power control parameters (P0_nominal_PUCCH)."
+        ],
+        schematicType: "power",
+        target: "< 0.25%",
+        formula: "(Drops_Due_To_UL_OOS / Total_Drops) * 100"
+      },
+      {
+        id: 25,
+        code: "DL_OOS",
+        name: "Downlink Out-of-Sync Drop Proportion",
+        category: "Retainability",
+        sentence: "<strong>DL_OOS</strong> measures the rate of call terminations caused by the mobile device failing to decode PDCCH control channels on 700/800 MHz downlinks.",
+        sentences3: [
+          "Downlink out-of-sync events occur in low-band when severe co-channel interference from an overshooting neighbor wipes out PDCCH symbols.",
+          "EMS reports high DL_OOS during atmospheric ducting events or when remote electrical tilts are set too high, bleeding coverage into adjacent valleys.",
+          "Engineers evaluate DL_OOS to optimize PDCCH power boosting and aggregation level allocations on the low-band carrier."
+        ],
+        schematicType: "spectrum",
+        target: "< 0.20%",
+        formula: "(Drops_Due_To_DL_OOS / Total_Drops) * 100"
+      },
+      {
+        id: 26,
+        code: "LS_DR",
+        name: "Low-SINR Call Drop Ratio",
+        category: "Retainability",
+        sentence: "<strong>LS_DR</strong> isolates the percentage of session terminations that take place while the radio link operates in severe negative SINR conditions.",
+        sentences3: [
+          "Low-band 700/800 MHz networks suffer from pilot pollution where 3 or more cell lobes arrive with near-equal power, driving SINR below -3 dB.",
+          "EMS displays LS_DR spikes along major highway inter-site boundaries where handover execution fails to complete in time.",
+          "An LS_DR above 0.3% indicates that the physical neighbor list or measurement handover offsets (A3 hysteresis) require immediate tuning."
+        ],
+        schematicType: "sinr",
+        target: "< 0.30%",
+        formula: "(Drops_With_SINR_Below_0dB / Total_Drops) * 100"
+      },
+      {
+        id: 27,
+        code: "HO_FDR",
+        name: "Handover Failure Drop Rate",
+        category: "Retainability",
+        sentence: "<strong>HO_FDR</strong> tracks the percentage of active sessions dropped specifically while attempting to transition to or from a 700/800 MHz cell sector.",
+        sentences3: [
+          "When a user traveling at highway speeds exits a low-band coverage area, delays in target admission can cause handover execution timeouts.",
+          "EMS alerts highlight HO_FDR to detect missing reciprocal neighbor definitions and misaligned antenna azimuth directions.",
+          "The operational standard for HO_FDR is maintained below 0.15% across all macro carrier sectors."
+        ],
+        schematicType: "handover",
+        target: "< 0.15%",
+        formula: "(Drops_During_HO_Execution / Total_HO_Attempts) * 100"
+      },
+      {
+        id: 28,
+        code: "TA_DR",
+        name: "Extended Timing Advance Drop Rate",
+        category: "Retainability",
+        sentence: "<strong>TA_DR</strong> monitors session drops occurring when a mobile device exceeds the maximum permissible timing advance propagation delay limit.",
+        sentences3: [
+          "In 700/800 MHz macro towers, coastal or desert terrain allows signals to connect beyond standard 35 km cell radius boundaries, exceeding guard times.",
+          "EMS counts TA_DR to identify subscribers dropped when their signals cross subframe boundaries and corrupt adjacent uplink user slots.",
+          "Enabling extended cyclic prefix or 3GPP extended cell features in the EMS resolves abnormal TA boundary drops."
+        ],
+        schematicType: "distance",
+        target: "< 0.10%",
+        formula: "(Drops_At_Max_TA / Total_Drops) * 100"
+      },
+      {
+        id: 29,
+        code: "INACT_R",
+        name: "User Inactivity Release Rate",
+        category: "Retainability",
+        sentence: "<strong>INACT_R</strong> measures the rate at which idle mobile devices are cleanly released from connected state back to idle state to preserve low-band radio resources.",
+        sentences3: [
+          "700/800 MHz cells possess limited PUCCH capacity; leaving inactive users in connected state exhausts scheduler tables.",
+          "EMS profiles user inactivity timers (typically set between 10 to 20 seconds) to balance battery consumption with signaling channel overhead.",
+          "A steady INACT_R indicates orderly radio connection management without memory leaks in the base station baseband pool."
+        ],
+        schematicType: "protocol",
+        target: "Reflects normal state-transition behavior",
+        formula: "(Normal_Inactivity_Releases / Total_RRC_Releases) * 100"
+      },
+      {
+        id: 30,
+        code: "RRC_RTR",
+        name: "RRC Re-establishment Success Rate",
+        category: "Retainability",
+        sentence: "<strong>RRC_RTR</strong> evaluates the capability of the low-band base station to salvage an interrupted radio connection following a temporary link failure.",
+        sentences3: [
+          "Following a radio link failure, the user equipment searches for an available 700/800 MHz carrier cell and transmits an RRCConnectionReestablishmentRequest.",
+          "EMS measures whether the target low-band sector possesses the user context to restore data bearers without dropping the session.",
+          "In low-band networks, achieving an RRC_RTR over 65% ensures that commuters traversing railway cuttings avoid dropped voice calls."
+        ],
+        schematicType: "protocol",
+        target: "≥ 65.0%",
+        formula: "(Successful_RRC_Re-est / Attempted_RRC_Re-est) * 100"
+      },
+
+      // 31-40: Mobility & Handover
+      {
+        id: 31,
+        code: "INTRA_HO",
+        name: "Intra-Frequency Handover Success Rate",
+        category: "Mobility",
+        sentence: "<strong>INTRA_HO</strong> measures handover completion success between sectors operating on the identical 700/800 MHz radio carrier frequency.",
+        sentences3: [
+          "Intra-frequency handovers represent the dominant mobility event as subscribers drive across neighboring low-band cell sectors.",
+          "EMS platforms track source preparation and target execution metrics to isolate whether handover delays stem from X2/Xn links or RF interference.",
+          "Carrier performance agreements mandate INTRA_HO values above 99.0% on all low-band sectors."
+        ],
+        schematicType: "handover",
+        target: "≥ 99.0%",
+        formula: "(Successful_IntraFreq_HO / Attempted_IntraFreq_HO) * 100"
+      },
+      {
+        id: 32,
+        code: "INTER_HO",
+        name: "Inter-Frequency Low-to-High Handover Success Rate",
+        category: "Mobility",
+        sentence: "<strong>INTER_HO</strong> tracks handover success when offloading traffic from 700/800 MHz carriers to higher capacity mid-band layers (1800/2100/2600 MHz).",
+        sentences3: [
+          "Low-band cells continuously attempt to offload connected users to mid-band layers as soon as the user enters sufficient mid-band coverage.",
+          "EMS registers inter-frequency execution to verify that compressed-mode measurement gaps do not degrade ongoing user throughput.",
+          "A high success rate (> 98.5%) prevents low-band 700/800 MHz carriers from becoming congested by users who could be accommodated on mid-band."
+        ],
+        schematicType: "handover",
+        target: "≥ 98.5%",
+        formula: "(Successful_InterFreq_HO / Attempted_InterFreq_HO) * 100"
+      },
+      {
+        id: 33,
+        code: "IRAT_HO",
+        name: "Inter-RAT Handover Success Rate",
+        category: "Mobility",
+        sentence: "<strong>IRAT_HO</strong> measures mobility execution between distinct radio access technologies, such as transitions between 5G NR, 4G LTE, and legacy networks.",
+        sentences3: [
+          "In 700/800 MHz bands, IRAT handovers maintain voice continuity via Single Radio Voice Call Continuity (SRVCC) or fallbacks.",
+          "EMS monitors latency and target acceptance during inter-system relocations to avoid audio mute gaps during voice handovers.",
+          "Network benchmarks require IRAT_HO to exceed 97.5% across all 700/800 MHz border sectors."
+        ],
+        schematicType: "handover",
+        target: "≥ 97.5%",
+        formula: "(Successful_IRAT_HO / Attempted_IRAT_HO) * 100"
+      },
+      {
+        id: 34,
+        code: "A2_TR",
+        name: "A2 Event Trigger Rate (Serving Worse Than Threshold)",
+        category: "Mobility",
+        sentence: "<strong>A2_TR</strong> monitors how frequently connected mobile devices report that their serving 700/800 MHz signal has dropped below an operational threshold.",
+        sentences3: [
+          "Event A2 serves as the primary gateway to activate inter-frequency blind search or measurement gaps on connected UEs.",
+          "In 700/800 MHz networks, an abnormal surge in A2 triggers indicates a sudden loss of coverage, physical antenna tilt slippage, or deep building entry.",
+          "EMS monitors A2 trigger counts to balance device battery preservation against handover readiness."
+        ],
+        schematicType: "curve",
+        target: "Correlated with cluster border boundaries",
+        formula: "Count(Event_A2_Reports) per 1000 connected hours"
+      },
+      {
+        id: 35,
+        code: "A5_TR",
+        name: "A5 Event Handover Trigger Rate",
+        category: "Mobility",
+        sentence: "<strong>A5_TR</strong> tracks dual-threshold handover triggers where the serving low-band cell falls below threshold 1 while a neighbor exceeds threshold 2.",
+        sentences3: [
+          "Event A5 governs inter-frequency offloading, steering devices between 700 MHz umbrella cells and 1800/2100 MHz capacity layers.",
+          "EMS systems track A5 reports to ensure that devices do not get trapped on high-attenuation frequencies when a low-band carrier offers higher SINR.",
+          "Properly calibrated A5 offsets eliminate premature cell drops at the edge of urban coverage envelopes."
+        ],
+        schematicType: "handover",
+        target: "Balanced with traffic-steering policy",
+        formula: "Count(Event_A5_Executions) / Total_InterFreq_Triggers"
+      },
+      {
+        id: 36,
+        code: "HO_PING",
+        name: "Handover Ping-Pong Rate",
+        category: "Mobility",
+        sentence: "<strong>HO_PING</strong> evaluates the proportion of mobile devices that hand over to an adjacent cell and then bounce back to the origin cell within 5 seconds.",
+        sentences3: [
+          "Because 700/800 MHz signals have gradual attenuation slopes, overlapping sectors often present nearly identical signal strengths along borders.",
+          "EMS identifies ping-pong handovers to flag inadequate hysteresis margins or missing time-to-trigger (TTT) filter settings.",
+          "Keeping HO_PING below 3.0% reduces signaling load across X2/Xn interfaces and eliminates audio chopping during calls."
+        ],
+        schematicType: "handover",
+        target: "< 3.0%",
+        formula: "(PingPong_HO_Events (<5s) / Total_HO_Events) * 100"
+      },
+      {
+        id: 37,
+        code: "TOO_EARLY",
+        name: "Too-Early Handover Trigger Rate",
+        category: "Mobility",
+        sentence: "<strong>TOO_EARLY</strong> measures instances where a handover from a 700/800 MHz cell executes prematurely, resulting in an immediate radio link drop in the target cell.",
+        sentences3: [
+          "Premature handovers in low-band occur when a brief multipath reflection tricks the UE into triggering an event before entering the true target footprint.",
+          "EMS Mobility Robustness Optimization (MRO) algorithms flag these events to automatically increase target cell individual offsets (CIO).",
+          "A high too-early handover rate increases call drop risk and wastes baseband signaling capacity."
+        ],
+        schematicType: "handover",
+        target: "< 1.0%",
+        formula: "(Too_Early_HO_Events / Total_HO_Events) * 100"
+      },
+      {
+        id: 38,
+        code: "TOO_LATE",
+        name: "Too-Late Handover Trigger Rate",
+        category: "Mobility",
+        sentence: "<strong>TOO_LATE</strong> measures handovers that fail to execute in time because the serving 700/800 MHz signal drops faster than the measurement reporting cycle.",
+        sentences3: [
+          "Too-late handovers are frequent along high-speed freeways where vehicles rapidly travel behind terrain obstructions or high-rise structures.",
+          "EMS MRO systems detect when an RRC re-establishment request arrives at a neighbor cell following an RLF in the serving sector.",
+          "Engineers resolve too-late handovers by reducing Time-to-Trigger (TTT) from 320ms to 100ms or lowering handover hysteresis."
+        ],
+        schematicType: "handover",
+        target: "< 1.5%",
+        formula: "(Too_Late_HO_Events / Total_HO_Events) * 100"
+      },
+      {
+        id: 39,
+        code: "HO_LAT",
+        name: "Handover Execution Latency",
+        category: "Mobility",
+        sentence: "<strong>HO_LAT</strong> tracks the elapsed duration from when the base station sends the RRC Connection Reconfiguration command until the target receives completion confirmation.",
+        sentences3: [
+          "In 700/800 MHz macro sites, excessive handover latency exposes users to prolonged uncoordinated interference from the approaching target sector.",
+          "EMS monitors transport backhaul latency and inter-eNodeB X2 round-trip delays that slow down user context transfers.",
+          "Achieving an execution latency under 40 milliseconds prevents data packet buffering stall and audio degradation."
+        ],
+        schematicType: "protocol",
+        target: "< 40 ms",
+        formula: "Time(RRC_Reconfig_Complete) - Time(RRC_Reconfig_Command)"
+      },
+      {
+        id: 40,
+        code: "TGT_REJ",
+        name: "Target Cell Handover Rejection Rate",
+        category: "Mobility",
+        sentence: "<strong>TGT_REJ</strong> measures how frequently a target 700/800 MHz sector denies an incoming handover preparation request due to resource starvation.",
+        sentences3: [
+          "Because low-band carriers have narrower channel bandwidths (5-10 MHz), target sectors can run out of admission slots during peak traffic.",
+          "EMS flags target rejections to prompt load-balancing adjustments and prevent mobile users from experiencing sudden radio link dropouts.",
+          "Target rejection rates should remain below 0.5% to ensure fluid highway and commuter corridor mobility."
+        ],
+        schematicType: "protocol",
+        target: "< 0.5%",
+        formula: "(Rejected_HO_Prep_Requests / Total_HO_Prep_Requests) * 100"
+      },
+
+      // 41-50: Interference, Noise Floor & PIM
+      {
+        id: 41,
+        code: "RTWP",
+        name: "Received Total Wideband Power",
+        category: "Interference",
+        sentence: "<strong>RTWP</strong> measures the total integrated radio energy received across the entire low-band receiver bandwidth including noise, signals, and interference.",
+        sentences3: [
+          "In 700/800 MHz frequencies, RTWP serves as the premier diagnostic indicator for hardware feeder line health and external spectrum clean-ness.",
+          "EMS systems track RTWP deviations across antenna branches; a difference greater than 3 to 5 dB between branch A and B indicates a hardware fault.",
+          "Under clean, unloaded channel conditions, 700/800 MHz RTWP should reside between -106 dBm and -102 dBm."
+        ],
+        schematicType: "spectrum",
+        target: "-106 dBm to -102 dBm (Unloaded)",
+        formula: "10 * log10(k * T * B * NF) + Total_Interference"
+      },
+      {
+        id: 42,
+        code: "PIM_R",
+        name: "Passive Intermodulation Level Ratio",
+        category: "Interference",
+        sentence: "<strong>PIM_R</strong> calculates the rise in the uplink noise floor generated when high-power base station downlink transmissions mix across non-linear junctions in the antenna feed.",
+        sentences3: [
+          "Because 700/800 MHz has narrow duplex spacing, 3rd-order intermodulation products from 40W downlink carriers fall directly back into the uplink band.",
+          "EMS monitors PIM levels by correlating uplink noise spikes with surges in downlink physical resource block (PRB) power utilization.",
+          "A PIM ratio rising more than 4 dB above thermal noise degrades uplink cell radius and necessitates tower-climbing connector refurbishment."
+        ],
+        schematicType: "spectrum",
+        target: "< -115 dBm / Rise over thermal < 2 dB",
+        formula: "Uplink_Noise_Floor(High_DL_Power) - Uplink_Noise_Floor(Zero_DL_Power)"
+      },
+      {
+        id: 43,
+        code: "DTV_INT",
+        name: "Digital TV Harmonic Interference Level",
+        category: "Interference",
+        sentence: "<strong>DTV_INT</strong> quantifies external RF ingress spilling into the 700 MHz band from adjacent broadcast UHF digital television stations.",
+        sentences3: [
+          "The 700 MHz wireless spectrum (B12, B13, B14, B28) sits directly adjacent to residual broadcast television channel allocations in many nations.",
+          "EMS spectrum analyzer traces capture characteristic broadband 6 MHz or 8 MHz hump patterns that desensitize the base station uplink receiver.",
+          "Tracking DTV_INT allows operators to deploy external cavity notch filters or file formal interference notices with government spectrum regulators."
+        ],
+        schematicType: "spectrum",
+        target: "< -110 dBm across receiver passband",
+        formula: "Peak_Out_of_Band_Power_in_Band700"
+      },
+      {
+        id: 44,
+        code: "UL_RSSI_M",
+        name: "Uplink Mean RSSI per PRB",
+        category: "Interference",
+        sentence: "<strong>UL_RSSI_M</strong> measures the average received signal strength across individual physical resource blocks on the 700/800 MHz uplink.",
+        sentences3: [
+          "EMS collects per-PRB uplink noise heatmaps to discover narrowband jammers, cordless phone interference, or unapproved bi-directional boosters.",
+          "In a balanced 700/800 MHz cell, mean uplink RSSI remains flat across the carrier bandwidth unless external RF is illuminating specific subcarriers.",
+          "Values sustained above -98 dBm on idle PRBs warn of severe desensitization that limits uplink coverage and degrades voice reliability."
+        ],
+        schematicType: "prb",
+        target: "< -103 dBm (Per PRB idle noise floor)",
+        formula: "1/N * Sum(RSSI_PRB_i) for i = 1 to N"
+      },
+      {
+        id: 45,
+        code: "UL_RSSI_P",
+        name: "Uplink Peak RSSI Spike Count",
+        category: "Interference",
+        sentence: "<strong>UL_RSSI_P</strong> counts transient high-amplitude interference pulses that momentarily blind the low-band base station receiver.",
+        sentences3: [
+          "700/800 MHz antennas often capture high-power pulses from utility Smart Grid meters, military communications, or arc-welding industrial machinery.",
+          "EMS records transient spikes that exceed -85 dBm to explain sudden random access preambles failures and dropped calls.",
+          "High peak counts trigger automated notification routines for field RF optimization crews equipped with direction-finding antennas."
+        ],
+        schematicType: "spectrum",
+        target: "< 5 burst events per hour",
+        formula: "Count(PRB_RSSI > -85 dBm during subframe)"
+      },
+      {
+        id: 46,
+        code: "ACIR",
+        name: "Adjacent Channel Interference Ratio",
+        category: "Interference",
+        sentence: "<strong>ACIR</strong> measures total crosstalk power leaking between immediately adjacent frequency channels in the crowded 700/800 MHz bands.",
+        sentences3: [
+          "700 MHz Band 13 (Verizon) sits adjacent to public safety Band 14, requiring tight guard bands and high filter rejection.",
+          "EMS tracks ACIR to monitor whether adjacent carrier spectral re-growth is saturating the low-band front-end low noise amplifiers.",
+          "Maintaining an ACIR above 33 dB preserves orthogonality and ensures that high-power transmitters do not blind neighboring operators."
+        ],
+        schematicType: "spectrum",
+        target: "≥ 33 dB",
+        formula: "1 / ( (1/ACLR) + (1/ACS) )"
+      },
+      {
+        id: 47,
+        code: "DIV_IMB",
+        name: "Receiver Diversity Imbalance",
+        category: "Interference",
+        sentence: "<strong>DIV_IMB</strong> calculates the persistent difference in average received signal strength between main and diversity antenna receiver branches on the tower.",
+        sentences3: [
+          "A diversity imbalance in 700/800 MHz setups indicates water ingress in a jumper cable, loose connectors, or a damaged tower-mounted amplifier.",
+          "EMS generates a maintenance ticket whenever the 24-hour moving average branch imbalance exceeds 3.5 dB.",
+          "Uncorrected diversity imbalances eliminate 2.5 to 3.0 dB of uplink receiver gain, reducing effective low-band rural cell coverage by up to 20%."
+        ],
+        schematicType: "vswr",
+        target: "< 3.0 dB delta between Rx branches",
+        formula: "| Avg_RSSI(Rx_Branch_0) - Avg_RSSI(Rx_Branch_1) |"
+      },
+      {
+        id: 48,
+        code: "CCI_R",
+        name: "Co-Channel Interference Ratio",
+        category: "Interference",
+        sentence: "<strong>CCI_R</strong> isolates interference power stemming from distant base stations reusing the same 700/800 MHz channel frequency.",
+        sentences3: [
+          "Because 700/800 MHz signals propagate long distances over flat terrain, co-channel interference frequently limits coverage before thermal noise does.",
+          "EMS correlates CCI_R with user location data to detect cell clusters lacking sufficient inter-site distance or downtilt isolation.",
+          "A CCI ratio lower than 10 dB impairs high-order modulation and forces the network down to basic QPSK throughput."
+        ],
+        schematicType: "sinr",
+        target: "≥ 15 dB (Unimpaired performance)",
+        formula: "Carrier_Power / Co_Channel_Interference_Power"
+      },
+      {
+        id: 49,
+        code: "NB_JAM",
+        name: "Narrowband Jammer Detection Index",
+        category: "Interference",
+        sentence: "<strong>NB_JAM</strong> tracks the presence of illegal or unauthorized continuous-wave transmissions occupying one or two specific subcarriers on the low band.",
+        sentences3: [
+          "Low-band public safety allocations (700 MHz Band 14) frequently face intentional or accidental narrowband jammers from consumer wireless equipment.",
+          "EMS digital signal processors run FFT anomaly algorithms to identify anomalous spectral energy confined within a 180 kHz PRB slot.",
+          "Instantaneous automated alarms enable network operators to deploy field interference hunting crews immediately."
+        ],
+        schematicType: "prb",
+        target: "0 active detections",
+        formula: "Max_PRB_RSSI - Median_Band_RSSI > 15 dB"
+      },
+      {
+        id: 50,
+        code: "PIM_HARM",
+        name: "3rd & 5th Order Intermodulation Harmonic Power",
+        category: "Interference",
+        sentence: "<strong>PIM_HARM</strong> tracks the calculated spectral intensity of intermodulation products generated by multi-carrier transmitters on shared low-band antennas.",
+        sentences3: [
+          "When 700 MHz Band 12 (734-746 MHz) and 850 MHz Band 5 (869-894 MHz) share an antenna array, intermodulation harmonics can fall directly into receiver ports.",
+          "EMS models transmitter carrier combinations to flag sites where dual-band concurrent operation produces internal receiver desensitization.",
+          "Resolving high PIM_HARM requires installing high-rejection diplexers and low-PIM (-160 dBc) RF DIN connectors."
+        ],
+        schematicType: "spectrum",
+        target: "< -160 dBc",
+        formula: "2*f1 - f2 (3rd order) and 3*f1 - 2*f2 (5th order)"
+      },
+
+      // 51-60: Uplink Performance & Power Headroom
+      {
+        id: 51,
+        code: "PHR_ZERO",
+        name: "Power Headroom Zero / Negative Ratio",
+        category: "Uplink",
+        sentence: "<strong>PHR_ZERO</strong> quantifies the proportion of user equipment transmission reports showing that subscriber devices have reached their maximum output power (23 dBm).",
+        sentences3: [
+          "In 700/800 MHz networks covering wide areas, mobile devices at cell edge quickly max out their battery-powered transmitters.",
+          "EMS monitors PHR_ZERO to identify geographic zones where users can hear the high-power tower (downlink ok) but cannot transmit back (uplink starved).",
+          "A PHR_ZERO count exceeding 12% signals an urgent need to re-tune P0_nominal_PUSCH or deploy low-band uplink antenna diversity."
+        ],
+        schematicType: "power",
+        target: "< 8.0% of total connected UEs",
+        formula: "(Count(UE_PHR <= 0 dB) / Total_PHR_Reports) * 100"
+      },
+      {
+        id: 52,
+        code: "PUSCH_SINR",
+        name: "PUSCH Uplink SINR Average",
+        category: "Uplink",
+        sentence: "<strong>PUSCH_SINR</strong> evaluates the signal-to-interference-plus-noise ratio on the Physical Uplink Shared Channel carrying user payload data.",
+        sentences3: [
+          "Low-band 700/800 MHz user uplink data speeds depend directly on sustaining a clean PUSCH SINR despite long propagation distances.",
+          "EMS measures PUSCH SINR to control closed-loop uplink power commands (TPC) and allocate appropriate modulation schemes.",
+          "Maintaining average PUSCH SINR above 8 dB ensures reliable mobile uploads and prevents premature packet fragmentation."
+        ],
+        schematicType: "sinr",
+        target: "≥ 8.0 dB (Average across cell users)",
+        formula: "Uplink_PUSCH_Signal_Power / (Interference + Noise)"
+      },
+      {
+        id: 53,
+        code: "PUCCH_SINR",
+        name: "PUCCH Control Channel Uplink SINR",
+        category: "Uplink",
+        sentence: "<strong>PUCCH_SINR</strong> monitors signal quality on the uplink control channel carrying vital HARQ ACK/NACK responses and scheduling requests.",
+        sentences3: [
+          "If 700/800 MHz PUCCH SINR drops too low, the base station cannot detect downlink packet acknowledgments, causing spurious downlink retransmissions.",
+          "EMS safeguards PUCCH SINR by allocating robust power control offsets and reserving dedicated PRBs at band edges.",
+          "Targeting a minimum PUCCH SINR of 4.0 dB prevents sudden call drops caused by missed scheduling requests."
+        ],
+        schematicType: "sinr",
+        target: "≥ 4.0 dB",
+        formula: "Uplink_PUCCH_Signal_Power / (Interference + Noise)"
+      },
+      {
+        id: 54,
+        code: "PUSCH_BLER",
+        name: "PUSCH Initial Block Error Rate",
+        category: "Uplink",
+        sentence: "<strong>PUSCH_BLER</strong> measures the percentage of uplink user data transport blocks received with cyclic redundancy check (CRC) errors on the first decoding pass.",
+        sentences3: [
+          "In 700/800 MHz networks, uplink BLER tends to rise near cell boundaries due to subscriber power limitations and localized noise bursts.",
+          "EMS uses initial PUSCH BLER feedback to dynamically tune link adaptation algorithms and Modulation and Coding Scheme (MCS) selections.",
+          "Standard outer-loop link adaptation aims to converge initial PUSCH BLER around 10% for optimal spectral efficiency and HARQ retransmission trade-offs."
+        ],
+        schematicType: "curve",
+        target: "8% - 12% (Converged Outer Loop Target)",
+        formula: "(Failed_Initial_PUSCH_Blocks / Total_Initial_PUSCH_Blocks) * 100"
+      },
+      {
+        id: 55,
+        code: "PUCCH_BLER",
+        name: "PUCCH Control Channel Error Rate",
+        category: "Uplink",
+        sentence: "<strong>PUCCH_BLER</strong> quantifies the failure rate in correctly decoding uplink control channel messages carrying HARQ feedback and CQI reports.",
+        sentences3: [
+          "Unlike user payload data, PUCCH errors directly paralyze the downlink scheduler because the base station misinterprets ACKs as NACKs.",
+          "EMS platforms trigger immediate critical alarms if PUCCH_BLER exceeds 2.0% on a 700/800 MHz macro cell.",
+          "Low PUCCH BLER is preserved through 4-way receiver diversity and robust cyclic shift parameter spacing."
+        ],
+        schematicType: "curve",
+        target: "< 1.0%",
+        formula: "(Corrupted_PUCCH_Messages / Total_PUCCH_Messages) * 100"
+      },
+      {
+        id: 56,
+        code: "SRS_SINR",
+        name: "Sounding Reference Signal SINR",
+        category: "Uplink",
+        sentence: "<strong>SRS_SINR</strong> evaluates wideband channel soundings transmitted by mobile devices across the full 700/800 MHz uplink bandwidth.",
+        sentences3: [
+          "SRS transmissions enable the base station to estimate frequency-selective channel fading and assign the cleanest PRBs to each subscriber.",
+          "EMS monitors SRS SINR across the coverage footprint to optimize uplink channel reciprocity for multi-antenna beamforming.",
+          "Low SRS SINR (< 0 dB) indicates that the mobile device lacks sufficient power to sound the entire 10 MHz carrier channel effectively."
+        ],
+        schematicType: "spectrum",
+        target: "≥ 5.0 dB",
+        formula: "Uplink_SRS_Power / (Interference + Noise)"
+      },
+      {
+        id: 57,
+        code: "UL_MCS_AVG",
+        name: "Average Uplink Modulation & Coding Scheme",
+        category: "Uplink",
+        sentence: "<strong>UL_MCS_AVG</strong> tracks the mean modulation order and code rate assigned by the uplink scheduler to connected subscribers.",
+        sentences3: [
+          "Low-band 700/800 MHz uplink channels are dominated by QPSK and 16QAM modulation due to path loss constraints on mobile user equipment.",
+          "EMS monitors UL_MCS_AVG; an average dropping below index 8 indicates widespread uplink power exhaustion or elevated receiver noise floors.",
+          "Sustaining an average MCS above 12 enables acceptable video streaming and file upload performance on 700/800 MHz channels."
+        ],
+        schematicType: "prb",
+        target: "≥ 11.0 (Median index on 0-28 scale)",
+        formula: "Weighted_Sum(MCS_Index * Assigned_PRBs) / Total_Assigned_PRBs"
+      },
+      {
+        id: 58,
+        code: "UL_HARQ_RET",
+        name: "Uplink HARQ Retransmission Rate",
+        category: "Uplink",
+        sentence: "<strong>UL_HARQ_RET</strong> measures the proportion of uplink transport blocks requiring second, third, or fourth HARQ recovery passes.",
+        sentences3: [
+          "Excessive HARQ retransmissions introduce physical layer latency that degrades interactive voice and real-time gaming applications.",
+          "EMS tracks retransmission loops to verify that maximum HARQ retransmission limits are not reached, which causes radio link failure.",
+          "An uplink HARQ retransmission rate below 15% confirms stable physical radio link operation."
+        ],
+        schematicType: "protocol",
+        target: "< 15.0%",
+        formula: "(Retransmitted_UL_TB / Total_Transmitted_UL_TB) * 100"
+      },
+      {
+        id: 59,
+        code: "TA_TAIL",
+        name: "High-Timing Advance Heavy Tail Ratio",
+        category: "Uplink",
+        sentence: "<strong>TA_TAIL</strong> calculates the proportion of active uplink connections operating at the highest Timing Advance distance bins.",
+        sentences3: [
+          "Due to 700/800 MHz propagation qualities, users can remain locked to distant towers 20 to 40 km away, creating extreme timing delays.",
+          "EMS detects when TA_TAIL exceeds 10%, indicating that the site is carrying distant fringe traffic that degrades sector-wide uplink capacity.",
+          "Corrective actions include lowering maximum allowed TA limits in the cell configuration or adding downtilt to focus coverage locally."
+        ],
+        schematicType: "distance",
+        target: "< 5.0% of total connected users",
+        formula: "(Count(TA > 40 [~15.6km]) / Total_Connected_Users) * 100"
+      },
+      {
+        id: 60,
+        code: "UE_TX_PWR",
+        name: "UE Transmit Power Utilization Mean",
+        category: "Uplink",
+        sentence: "<strong>UE_TX_PWR</strong> estimates average mobile device transmit power output across all active connections on the 700/800 MHz carrier.",
+        sentences3: [
+          "A cell where the average UE transmit power runs near 20 to 23 dBm indicates that the mobile fleet is operating at battery-draining limits.",
+          "EMS monitors this metric to gauge whether base station antenna configurations are balanced for symmetric uplink and downlink reach.",
+          "Optimized 700/800 MHz cells maintain average UE transmit power between 10 dBm and 16 dBm under suburban and urban loads."
+        ],
+        schematicType: "power",
+        target: "10 dBm to 16 dBm (Optimal cluster average)",
+        formula: "Average(Reported_P_CMAX - PHR_Value)"
+      },
+
+      // 61-70: Downlink Capacity & Radio Resource Allocation
+      {
+        id: 61,
+        code: "DL_PRB_UTL",
+        name: "Downlink PRB Utilization Rate",
+        category: "Capacity",
+        sentence: "<strong>DL_PRB_UTL</strong> measures the percentage of Physical Resource Blocks consumed on the 700/800 MHz downlink relative to total available spectrum.",
+        sentences3: [
+          "Because 700/800 MHz spectrum is constrained to narrow 5MHz, 10MHz, or 15MHz carrier channels, PRB capacity fills up quickly during busy hours.",
+          "EMS triggers capacity congestion alarms when hourly DL_PRB_UTL surpasses 75%, warning of imminent subscriber throughput throttling.",
+          "High PRB utilization triggers carrier aggregation or connected-mode offloading algorithms to steer traffic to mid-band layers."
+        ],
+        schematicType: "prb",
+        target: "< 70% Busy Hour / Baseline Capacity Trigger at 75%",
+        formula: "(Used_DL_PRBs / Total_Available_DL_PRBs) * 100"
+      },
+      {
+        id: 62,
+        code: "UL_PRB_UTL",
+        name: "Uplink PRB Utilization Rate",
+        category: "Capacity",
+        sentence: "<strong>UL_PRB_UTL</strong> tracks the percentage of available uplink physical resource blocks occupied by user data and sounding symbols.",
+        sentences3: [
+          "In 700/800 MHz systems, high uplink PRB usage increases interference across neighboring cells due to continuous uplink transmission power.",
+          "EMS monitors UL_PRB_UTL to ensure that sufficient clean PRBs remain available for emergency PRACH access and PUCCH control signaling.",
+          "Maintaining average busy hour UL_PRB_UTL below 60% prevents uplink noise floor escalation and session drop surges."
+        ],
+        schematicType: "prb",
+        target: "< 60% Busy Hour",
+        formula: "(Used_UL_PRBs / Total_Available_UL_PRBs) * 100"
+      },
+      {
+        id: 63,
+        code: "CCE_UTL",
+        name: "PDCCH Control Channel Element Utilization",
+        category: "Capacity",
+        sentence: "<strong>CCE_UTL</strong> evaluates consumption of Control Channel Elements on the Physical Downlink Control Channel scheduling user access.",
+        sentences3: [
+          "In 700/800 MHz cells with many distant users, the scheduler is forced to assign high aggregation levels (AL 4 and AL 8), consuming CCEs rapidly.",
+          "EMS flags CCE exhaustion when the cell fails to schedule users even though PRB capacity appears to remain available.",
+          "Keeping CCE utilization below 70% ensures that the base station scheduler can dispatch both downlink and uplink grants simultaneously."
+        ],
+        schematicType: "prb",
+        target: "< 70% during peak hours",
+        formula: "(Allocated_CCEs / Total_Available_CCEs) * 100"
+      },
+      {
+        id: 64,
+        code: "PDSCH_BLER",
+        name: "PDSCH Initial Block Error Rate",
+        category: "Capacity",
+        sentence: "<strong>PDSCH_BLER</strong> measures the fraction of downlink user payload transport blocks received with CRC check failures prior to HARQ recovery.",
+        sentences3: [
+          "Outer-loop link adaptation on 700/800 MHz targets a steady 10% initial BLER to balance aggressive modulation against retransmission overhead.",
+          "EMS displays a problem when PDSCH_BLER spikes over 20%, indicating that CQI feedback reporting was stale or channel fading accelerated.",
+          "Controlled PDSCH initial BLER maximizes spectral efficiency across narrow 5 to 10 MHz low-band carriers."
+        ],
+        schematicType: "curve",
+        target: "8% - 12% (Standard Outer-Loop Target)",
+        formula: "(Failed_Initial_PDSCH_Blocks / Total_Initial_PDSCH_Blocks) * 100"
+      },
+      {
+        id: 65,
+        code: "DL_256QAM",
+        name: "Downlink 256QAM Modulation Ratio",
+        category: "Capacity",
+        sentence: "<strong>DL_256QAM</strong> measures the percentage of downlink user data symbols transmitted using ultra-high-efficiency 256-state Quadrature Amplitude Modulation.",
+        sentences3: [
+          "256QAM requires exceptionally clean radio channels with SINR exceeding 22 dB, which can be challenging in interference-rich low-band frequencies.",
+          "EMS monitors DL_256QAM to measure how effectively near-tower subscribers capitalize on 8 bits per resource element.",
+          "A 256QAM usage proportion above 25% on 700/800 MHz indicates an exceptionally clean RF environment with low adjacent and co-channel interference."
+        ],
+        schematicType: "sinr",
+        target: "> 20% in urban/suburban clusters",
+        formula: "(Count(PDSCH_Symbols_256QAM) / Total_PDSCH_Symbols) * 100"
+      },
+      {
+        id: 66,
+        code: "DL_64QAM",
+        name: "Downlink 64QAM Modulation Ratio",
+        category: "Capacity",
+        sentence: "<strong>DL_64QAM</strong> tracks the proportion of downlink transmission blocks modulated with 64QAM (6 bits per symbol) over the low-band carrier.",
+        sentences3: [
+          "64QAM serves as the primary modulation workhorse for high-speed data across 700/800 MHz coverage zones under moderate SINR conditions.",
+          "EMS systems track shifts from 64QAM down to 16QAM or QPSK to quantify capacity degradation caused by external noise or cell overshoot.",
+          "Target performance profiles aim for over 45% of total low-band downlink bits to be delivered via 64QAM or higher modulation."
+        ],
+        schematicType: "sinr",
+        target: "> 45% of total downlink transmissions",
+        formula: "(Count(PDSCH_Symbols_64QAM) / Total_PDSCH_Symbols) * 100"
+      },
+      {
+        id: 67,
+        code: "DL_MCS_AVG",
+        name: "Average Downlink Modulation & Coding Scheme",
+        category: "Capacity",
+        sentence: "<strong>DL_MCS_AVG</strong> computes the average spectral coding rate index assigned to downlink users across the 700/800 MHz cell.",
+        sentences3: [
+          "Because 700/800 MHz carriers cover wide geographical zones, the cell-wide average MCS reflects overall RF quality and channel condition distribution.",
+          "EMS tracks DL_MCS_AVG; drops below index 14 warn of growing interference, antenna hardware degradation, or pilot pollution.",
+          "Maintaining an average MCS between 16 and 22 delivers optimal data throughput across narrow 10 MHz low-band allocations."
+        ],
+        schematicType: "prb",
+        target: "≥ 16.0 (Under balanced traffic conditions)",
+        formula: "Weighted_Sum(DL_MCS_Index * Scheduled_PRBs) / Total_Scheduled_PRBs"
+      },
+      {
+        id: 68,
+        code: "PB_OFFSET",
+        name: "Reference Signal Power Boost Offset",
+        category: "Capacity",
+        sentence: "<strong>PB_OFFSET</strong> configures the relative transmit power boost assigned to cell-specific reference signals compared to standard data resource elements.",
+        sentences3: [
+          "In 700/800 MHz deployments, boosting RS power improves channel estimation and edge coverage, but robs power from PDSCH data subcarriers.",
+          "EMS cross-examines PB settings (e.g., rho_A and rho_B) to ensure the power amplifier does not suffer from inter-carrier power imbalance.",
+          "Careful calibration of PB offsets balances wide-area cell-edge coverage with maximum central-cell data throughput."
+        ],
+        schematicType: "power",
+        target: "Pb = 1 (0 dB boost) or Pb = 2 (+1.76 dB boost)",
+        formula: "Power_RS_dBm - Power_PDSCH_RE_dBm"
+      },
+      {
+        id: 69,
+        code: "DL_PRB_TP",
+        name: "Downlink Throughput per PRB",
+        category: "Capacity",
+        sentence: "<strong>DL_PRB_TP</strong> calculates the average data payload kilobits delivered per individual Physical Resource Block over the low-band air interface.",
+        sentences3: [
+          "This metric isolates true spectral efficiency by measuring data yield independent of total channel bandwidth allocations.",
+          "EMS dashboards flag sectors where throughput per PRB falls below 45 kbps, pointing to high packet retransmissions or low-order modulation.",
+          "High-performing 700/800 MHz sectors achieve > 70 kbps/PRB when 256QAM and 2x2/4x4 MIMO streams operate cleanly."
+        ],
+        schematicType: "prb",
+        target: "≥ 65 kbps / PRB",
+        formula: "Total_DL_Payload_kbps / Active_DL_PRBs"
+      },
+      {
+        id: 70,
+        code: "MIMO_DUAL",
+        name: "MIMO Dual/Multi-Stream Rank 2 Ratio",
+        category: "Capacity",
+        sentence: "<strong>MIMO_DUAL</strong> measures the percentage of time the 700/800 MHz downlink operates in spatial multiplexing Rank 2 mode rather than single-stream transmit diversity.",
+        sentences3: [
+          "In low-band frequencies, larger antenna spacing is required on towers and handsets to maintain low correlation for dual-stream MIMO multiplexing.",
+          "EMS analyzes Rank Indicator (RI) reports from user devices to evaluate spatial multiplexing efficiency across the coverage area.",
+          "A Rank 2 proportion exceeding 55% effectively doubles channel capacity without requiring additional spectrum purchases."
+        ],
+        schematicType: "sinr",
+        target: "> 55% in suburban/urban areas",
+        formula: "(Time_In_Rank_2 / (Time_In_Rank_1 + Time_In_Rank_2)) * 100"
+      },
+
+      // 71-80: Throughput & Spectral Efficiency
+      {
+        id: 71,
+        code: "U_DL_TP_EDG",
+        name: "Cell-Edge User Downlink Throughput",
+        category: "Throughput",
+        sentence: "<strong>U_DL_TP_EDG</strong> measures the 5th-percentile downlink data rate achieved by users stationed at the outer fringes of the 700/800 MHz cell.",
+        sentences3: [
+          "Cell-edge throughput in 700/800 MHz represents the real-world safety margin for remote users streaming video or running navigation apps.",
+          "EMS monitors this metric to ensure universal service coverage commitments are satisfied in rural and low-density areas.",
+          "An edge target of > 2.5 Mbps on a 10 MHz carrier guarantees smooth web browsing and uninterrupted data streaming at the cell border."
+        ],
+        schematicType: "distance",
+        target: "≥ 2.5 Mbps (5th percentile on 10MHz channel)",
+        formula: "5th_Percentile(DL_User_Throughput_Distribution)"
+      },
+      {
+        id: 72,
+        code: "U_UL_TP_EDG",
+        name: "Cell-Edge User Uplink Throughput",
+        category: "Throughput",
+        sentence: "<strong>U_UL_TP_EDG</strong> tracks the 5th-percentile uplink data rate experienced by power-limited mobile devices transmitting from fringe coverage locations.",
+        sentences3: [
+          "Due to link budget limitations, uplink edge throughput on 700/800 MHz frequently drops to critical minimums when subscribers transmit from indoors.",
+          "EMS highlights sectors with cell-edge uplink rates under 512 kbps, where users experience upload timeouts and stalled communication.",
+          "Enabling uplink carrier aggregation or dual-carrier scheduling helps maintain acceptable edge upload speeds."
+        ],
+        schematicType: "power",
+        target: "≥ 512 kbps (5th percentile)",
+        formula: "5th_Percentile(UL_User_Throughput_Distribution)"
+      },
+      {
+        id: 73,
+        code: "AVG_C_DL_TP",
+        name: "Average Cell Downlink Throughput",
+        category: "Throughput",
+        sentence: "<strong>AVG_C_DL_TP</strong> measures total aggregated data payload delivered per second across the entire 700/800 MHz cell sector.",
+        sentences3: [
+          "This metric serves as the primary capacity benchmark used by network management centers to track sector-level traffic growth over time.",
+          "EMS trends show that on a 10 MHz low-band LTE carrier with 2x2 MIMO, average cell throughput typically ranges from 18 to 28 Mbps.",
+          "Sustained drops in average cell throughput indicate radio link degradation, severe PRB congestion, or backhaul transmission throttling."
+        ],
+        schematicType: "curve",
+        target: "≥ 22 Mbps (Under loaded 10MHz FDD carrier)",
+        formula: "Total_DL_Bits_Transmitted / Active_Time_Seconds"
+      },
+      {
+        id: 74,
+        code: "AVG_C_UL_TP",
+        name: "Average Cell Uplink Throughput",
+        category: "Throughput",
+        sentence: "<strong>AVG_C_UL_TP</strong> calculates total aggregated uplink payload data received per second across the low-band base station receiver.",
+        sentences3: [
+          "In 700/800 MHz networks, average cell uplink throughput typically ranges between 8 and 14 Mbps on a clean 10 MHz carrier channel.",
+          "EMS platforms track uplink volume surges to plan backhaul upgrades and monitor growing mobile cloud-backup demands.",
+          "Degradations in cell uplink throughput without traffic declines pinpoint external interference or localized passive intermodulation (PIM) issues."
+        ],
+        schematicType: "curve",
+        target: "≥ 10 Mbps (On standard 10MHz FDD carrier)",
+        formula: "Total_UL_Bits_Received / Active_Time_Seconds"
+      },
+      {
+        id: 75,
+        code: "SPEC_EFF",
+        name: "Low-Band Spectral Efficiency",
+        category: "Throughput",
+        sentence: "<strong>SPEC_EFF</strong> measures bits-per-second delivered per Hertz of occupied 700/800 MHz radio spectrum across the operational footprint.",
+        sentences3: [
+          "Because low-band spectrum licenses represent multi-billion-dollar investments, maximizing spectral efficiency is a primary operator objective.",
+          "EMS calculates spectral efficiency to compare network equipment vendors and evaluate antenna upgrade performance across tower portfolios.",
+          "A healthy 700/800 MHz macro sector targets an average downlink spectral efficiency of 2.2 to 2.8 bps/Hz."
+        ],
+        schematicType: "prb",
+        target: "≥ 2.2 bps/Hz (Downlink average)",
+        formula: "Cell_Throughput_bps / Carrier_Bandwidth_Hz"
+      },
+      {
+        id: 76,
+        code: "V_PKT_LOSS",
+        name: "VoLTE Packet Loss Rate",
+        category: "Throughput",
+        sentence: "<strong>V_PKT_LOSS</strong> measures the percentage of voice packets lost across the 700/800 MHz radio interface during active QCI-1 calls.",
+        sentences3: [
+          "VoLTE speech codecs conceal packet losses up to 1%, but losses exceeding 2% introduce robotic audio, syllable dropouts, and listener fatigue.",
+          "EMS monitors uplink and downlink packet loss separately to isolate whether audio issues stem from handset power limits or base station scheduling.",
+          "Maintaining VoLTE packet loss under 0.5% guarantees crystal-clear HD voice quality across deep rural and indoor environments."
+        ],
+        schematicType: "protocol",
+        target: "< 0.50%",
+        formula: "(Lost_QCI1_Packets / Total_Expected_QCI1_Packets) * 100"
+      },
+      {
+        id: 77,
+        code: "V_JITTER",
+        name: "VoLTE Packet Delay Variation (Jitter)",
+        category: "Throughput",
+        sentence: "<strong>V_JITTER</strong> quantifies variance in packet inter-arrival times for voice packets delivered across the low-band interface.",
+        sentences3: [
+          "In 700/800 MHz cells experiencing heavy data congestion, packet scheduling jitter can overflow device de-jitter buffers and cause audio dropouts.",
+          "EMS systems track PDCP-layer packet arrival variance to ensure semi-persistent scheduling (SPS) allocates steady 20ms voice frames.",
+          "Sustaining average voice jitter below 15 milliseconds prevents speech clipping and maintains high user satisfaction."
+        ],
+        schematicType: "protocol",
+        target: "< 15 ms",
+        formula: "Mean(| Inter_Arrival_Time - Expected_Period (20ms) |)"
+      },
+      {
+        id: 78,
+        code: "PDCP_UL_LOSS",
+        name: "PDCP Layer Uplink Packet Discard Rate",
+        category: "Throughput",
+        sentence: "<strong>PDCP_UL_LOSS</strong> calculates the percentage of user data packets dropped at the Packet Data Convergence Protocol layer due to transfer timeouts.",
+        sentences3: [
+          "When low-band mobile devices encounter severe uplink path loss, packets buffer in memory until the PDCP discard timer expires.",
+          "EMS tracks this metric to detect extreme uplink starvation where TCP connections stall and trigger user-perceived connection freezes.",
+          "Keeping PDCP uplink loss below 0.3% preserves fluid web navigation and snappy mobile application performance."
+        ],
+        schematicType: "protocol",
+        target: "< 0.30%",
+        formula: "(Discarded_PDCP_Packets / Total_PDCP_Packets) * 100"
+      },
+      {
+        id: 79,
+        code: "PDCP_DL_LOSS",
+        name: "PDCP Layer Downlink Packet Loss",
+        category: "Throughput",
+        sentence: "<strong>PDCP_DL_LOSS</strong> measures the fraction of downlink packets unacknowledged at the radio layer after exhausting all RLC/MAC retransmissions.",
+        sentences3: [
+          "Downlink PDCP losses in 700/800 MHz indicate that the subscriber moved into an RF shadow faster than the scheduler could adapt modulation.",
+          "EMS alerts flag clusters where high PDCP loss forces TCP congestion windows to collapse, cutting application download speeds in half.",
+          "The target for downlink PDCP packet loss is maintained strictly below 0.20% in healthy telecom sectors."
+        ],
+        schematicType: "protocol",
+        target: "< 0.20%",
+        formula: "(Lost_DL_PDCP_Packets / Total_Sent_DL_PDCP_Packets) * 100"
+      },
+      {
+        id: 80,
+        code: "RTT_LAT",
+        name: "Radio Round-Trip Latency (RTT)",
+        category: "Throughput",
+        sentence: "<strong>RTT_LAT</strong> measures the elapsed time for an IP ping packet to traverse from the base station over the low-band air interface to the device and back.",
+        sentences3: [
+          "While 700/800 MHz propagation covers vast distances, speed-of-light delays over 30 km add noticeable physical latency to data round-trips.",
+          "EMS systems track user plane RTT latency to optimize gaming responsiveness, cloud transactions, and public safety dispatch commands.",
+          "Air-interface RTT latency on low-band LTE should average under 25 milliseconds, dropping below 12 ms on 5G NR low-band (n28/n71) carriers."
+        ],
+        schematicType: "distance",
+        target: "< 25 ms (LTE) / < 12 ms (5G NR Low-Band)",
+        formula: "Time(IP_Ping_Response) - Time(IP_Ping_Transmit)"
+      },
+
+      // 81-90: RF Hardware, PA & Antenna Health
+      {
+        id: 81,
+        code: "VSWR",
+        name: "Voltage Standing Wave Ratio",
+        category: "Hardware",
+        sentence: "<strong>VSWR</strong> measures the impedance match between the base station transmitter and the antenna feed system by calculating forward-to-reflected wave ratios.",
+        sentences3: [
+          "In 700/800 MHz installations, physical cable corrosion, water-logged jumpers, or lightning damage cause impedance mismatches that reflect power back into the radio.",
+          "EMS generates major alarms when VSWR exceeds 1.35 and emergency shutdown alarms at 1.50 to prevent destroying the power amplifier transistors.",
+          "A healthy antenna system maintains VSWR below 1.20, ensuring over 99% of generated RF energy radiates into the coverage sector."
+        ],
+        schematicType: "vswr",
+        target: "< 1.25:1 (Nominal) / Alarm at > 1.35:1",
+        formula: "(1 + sqrt(P_ref / P_fwd)) / (1 - sqrt(P_ref / P_fwd))"
+      },
+      {
+        id: 82,
+        code: "RET_STATUS",
+        name: "Remote Electrical Tilt Alignment State",
+        category: "Hardware",
+        sentence: "<strong>RET_STATUS</strong> monitors the physical mechanical tilt angle and motor controller communication status across low-band antenna arrays.",
+        sentences3: [
+          "Precise antenna tilt in 700/800 MHz deployments is critical because a 1-degree error can shift the coverage boundary by multiple miles.",
+          "EMS continuously validates the AISG (Antenna Interface Standards Group) protocol connection to detect jammed actuator motors or sensor drift.",
+          "Maintaining calibrated RET alignment prevents unintentional low-band overshoot and inter-site pilot pollution."
+        ],
+        schematicType: "distance",
+        target: "0° motor offset error / AISG Connection OK",
+        formula: "Current_Reported_Tilt_Degrees == Planned_Target_Tilt"
+      },
+      {
+        id: 83,
+        code: "PA_TEMP",
+        name: "Power Amplifier Operating Temperature",
+        category: "Hardware",
+        sentence: "<strong>PA_TEMP</strong> tracks thermal sensor outputs from the remote radio head power amplifier driving the high-wattage 700/800 MHz carrier.",
+        sentences3: [
+          "700/800 MHz base stations transmit high continuous RF power (often 40W to 80W per port) to penetrate obstacles, producing high heat dissipation.",
+          "EMS triggers cooling fan boosts or defensive power throttling if internal PA heatsinks exceed 85°C during hot summer days.",
+          "Keeping operating temperatures within thermal envelopes extends radio unit life and prevents thermal noise floor escalation."
+        ],
+        schematicType: "power",
+        target: "< 75°C (Normal) / Critical Shutdown at > 90°C",
+        formula: "Measured_Sensor_Temp_in_Celsius"
+      },
+      {
+        id: 84,
+        code: "PA_CLIP",
+        name: "Power Amplifier Clipping & Back-off Rate",
+        category: "Hardware",
+        sentence: "<strong>PA_CLIP</strong> measures instances where digital baseband signal peaks exceed the linear operating range of the low-band power amplifier.",
+        sentences3: [
+          "High peak-to-average power ratios (PAPR) in multi-carrier low-band systems cause PA non-linearity and out-of-band emissions when clipped.",
+          "EMS monitors digital pre-distortion (DPD) feedback and power back-off settings to ensure clean spectral containment.",
+          "Keeping clipping rates below 0.01% prevents adjacent-channel splatter into neighboring public safety frequencies."
+        ],
+        schematicType: "power",
+        target: "< 0.01%",
+        formula: "(Clipped_Baseband_Samples / Total_Samples) * 100"
+      },
+      {
+        id: 85,
+        code: "CPRI_BER",
+        name: "CPRI / eCPRI Optical Bit Error Rate",
+        category: "Hardware",
+        sentence: "<strong>CPRI_BER</strong> monitors the bit error integrity of fiber optic cables connecting the baseband pool (BBU) to mast-mounted Remote Radio Units (RRU).",
+        sentences3: [
+          "Fiber optic micro-bends, contaminated optical connectors, or transceiver degradation introduce bit errors on digitized IQ radio streams.",
+          "EMS alarms register when optical frame error rates surge, causing missing radio frames, phase noise, and random call dropouts.",
+          "Optical link standards require a CPRI BER better than 10^-12 to prevent baseband processing errors."
+        ],
+        schematicType: "protocol",
+        target: "< 10^-12 Bit Error Rate",
+        formula: "Corrupted_Optical_Frames / Total_Transmitted_Frames"
+      },
+      {
+        id: 86,
+        code: "TMA_STAT",
+        name: "Tower Mounted Amplifier Gain State",
+        category: "Hardware",
+        sentence: "<strong>TMA_STAT</strong> tracks DC current bias and amplification status of low-noise pre-amplifiers installed directly behind 700/800 MHz antennas.",
+        sentences3: [
+          "TMAs provide 10 to 12 dB of uplink gain to overcome feeder cable attenuation on tall towers, enhancing weak mobile device reception.",
+          "EMS detects TMA bypass failure modes where internal bypass relays engage during DC power interruptions, causing immediate 10 dB coverage loss.",
+          "Ensuring normal TMA operational bias prevents sudden uplink deafening across rural low-band cell coverage zones."
+        ],
+        schematicType: "vswr",
+        target: "Normal Amplification (+12 dB) / Current within limits",
+        formula: "Measured_DC_Bias_Current == Manufacturer_Nominal_mA"
+      },
+      {
+        id: 87,
+        code: "DPD_CONV",
+        name: "Digital Pre-Distortion Convergence State",
+        category: "Hardware",
+        sentence: "<strong>DPD_CONV</strong> verifies that real-time mathematical inversion algorithms successfully counteract power amplifier non-linearities in the radio head.",
+        sentences3: [
+          "DPD algorithms continuously adjust digital baseband signals to counteract compression curves in Gallium Nitride (GaN) power amplifiers.",
+          "EMS systems generate an urgent alarm if the DPD feedback loop fails to converge, which causes adjacent channel leakage compliance failures.",
+          "A converged DPD state ensures maximum power efficiency and clean adjacent-band frequency spectrum."
+        ],
+        schematicType: "power",
+        target: "Converged / ACLR Improvement > 15 dB",
+        formula: "DPD_Correction_Gain_Metric"
+      },
+      {
+        id: 88,
+        code: "RET_LOSS",
+        name: "Antenna Return Loss",
+        category: "Hardware",
+        sentence: "<strong>RET_LOSS</strong> measures the ratio of reflected RF power to incident RF power in decibels along the antenna transmission feed system.",
+        sentences3: [
+          "Return loss provides an alternative decibel-scale perspective of VSWR, where higher values represent superior antenna impedance matching.",
+          "EMS tracks seasonal return loss variations; drops under 16 dB indicate water entry in coaxial connectors or physical cable mechanical stress.",
+          "Telecom installation standards require a clean return loss exceeding 18 to 20 dB across the entire 700/800 MHz band."
+        ],
+        schematicType: "vswr",
+        target: "≥ 18 dB (Target) / > 15 dB (Acceptable minimum)",
+        formula: "10 * log10( Incident_Power / Reflected_Power )"
+      },
+      {
+        id: 89,
+        code: "XPOL_ISO",
+        name: "Cross-Polarization Port Isolation",
+        category: "Hardware",
+        sentence: "<strong>XPOL_ISO</strong> evaluates electrical signal isolation between slant +45° and -45° polarization dipoles within dual-polarized low-band antennas.",
+        sentences3: [
+          "High cross-polar isolation is required on 700/800 MHz antennas to prevent transmit power on one dipole from coupling into the receiver port of the other.",
+          "EMS monitors RF port coupling to detect internal antenna array element degradation caused by lightning surges or moisture ingress.",
+          "An isolation metric above 28 dB ensures clean 2x2 MIMO spatial channel separation and prevents self-induced desensitization."
+        ],
+        schematicType: "vswr",
+        target: "≥ 28 dB between +45° and -45° ports",
+        formula: "10 * log10( P_Port1 / P_Port2_Coupled )"
+      },
+      {
+        id: 90,
+        code: "FLT_LOSS",
+        name: "Duplexer & Filter Insertion Loss",
+        category: "Hardware",
+        sentence: "<strong>FLT_LOSS</strong> quantifies RF signal power attenuation introduced by cavity bandpass duplexers separating uplink and downlink paths.",
+        sentences3: [
+          "In 700/800 MHz radio heads, cavity filters require steep roll-off skirts to isolate closely spaced uplink and downlink carrier blocks.",
+          "EMS monitors calibration offsets to detect temperature-induced filter de-tuning that adds unexpected decibels of insertion loss.",
+          "Keeping insertion loss below 0.8 dB ensures maximum RF energy reaches the air while preserving low receiver noise figures."
+        ],
+        schematicType: "vswr",
+        target: "< 0.8 dB within passband",
+        formula: "P_Filter_Input (dBm) - P_Filter_Output (dBm)"
+      },
+
+      // 91-100: Carrier Aggregation & Advanced Features
+      {
+        id: 91,
+        code: "CA_PCELL_R",
+        name: "Carrier Aggregation Primary Cell Ratio",
+        category: "Advanced Features",
+        sentence: "<strong>CA_PCELL_R</strong> measures the percentage of multi-carrier CA sessions where the 700/800 MHz carrier acts as the primary anchor cell (PCell).",
+        sentences3: [
+          "700/800 MHz serves as the ideal Carrier Aggregation PCell anchor because its robust coverage maintains the control plane while higher bands add capacity.",
+          "EMS monitors PCell utilization to balance signaling loads against mid-band primary cell assignment strategies.",
+          "A balanced PCell distribution guarantees dependable control coverage without overloading low-band PUCCH control resources."
+        ],
+        schematicType: "handover",
+        target: "Aligned with operator carrier steering strategy",
+        formula: "(Sessions_With_LowBand_PCell / Total_CA_Sessions) * 100"
+      },
+      {
+        id: 92,
+        code: "CA_SCELL_DR",
+        name: "Secondary Cell (SCell) Abnormal Deactivation Rate",
+        category: "Advanced Features",
+        sentence: "<strong>CA_SCELL_DR</strong> tracks unexpected premature drops of mid-band secondary carrier links aggregated with the low-band 700/800 MHz anchor.",
+        sentences3: [
+          "While the mobile device remains connected to the 700 MHz anchor, aggregated mid-band SCells frequently drop away as the subscriber steps indoors.",
+          "EMS tracks SCell deactivation rates to evaluate inter-band coverage deltas and calibrate activation RSRP hysteresis thresholds.",
+          "Minimizing premature SCell drops prevents throughput oscillations and reduces unnecessary signaling overhead."
+        ],
+        schematicType: "handover",
+        target: "< 2.0%",
+        formula: "(Abnormal_SCell_Deactivations / Total_Active_SCell_Time) * 100"
+      },
+      {
+        id: 93,
+        code: "ENDC_ANCH",
+        name: "EN-DC Low-Band Anchor Stability Rate",
+        category: "Advanced Features",
+        sentence: "<strong>ENDC_ANCH</strong> measures the connection reliability of 700/800 MHz LTE anchors managing dual-connectivity sessions with mid-band 5G NR (n41/n77/n78).",
+        sentences3: [
+          "In Non-Standalone (NSA) 5G, the low-band LTE leg provides control plane signaling (SgNB addition and maintenance) for high-speed 5G data.",
+          "EMS systems track anchor dropouts that unexpectedly tear down active gigabit 5G NR dual-connectivity sessions.",
+          "An anchor stability metric above 99.4% is essential to deliver a dependable 5G user experience without sudden session renegotiations."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.4%",
+        formula: "(Successful_ENDC_Sessions / Attempted_ENDC_Sessions) * 100"
+      },
+      {
+        id: 94,
+        code: "SA_REG_SR",
+        name: "5G Standalone (SA) Low-Band Registration Rate",
+        category: "Advanced Features",
+        sentence: "<strong>SA_REG_SR</strong> evaluates native 5G Core registration success when connecting directly to 700 MHz (n28) or 600/700 MHz (n71) carriers.",
+        sentences3: [
+          "Low-band 5G Standalone carriers provide national coverage and ultra-reliable low latency communication (URLLC) services without LTE assistance.",
+          "EMS monitors Next Generation Application Protocol (NGAP) registration sequences to pinpoint 5G Core authentication or slicing failures.",
+          "Carrier standards require SA low-band registration success to exceed 99.5% to support mission-critical IoT and cellular services."
+        ],
+        schematicType: "protocol",
+        target: "≥ 99.5%",
+        formula: "(Successful_5G_SA_Registrations / Total_Attempts) * 100"
+      },
+      {
+        id: 95,
+        code: "DRX_EFF",
+        name: "Connected-Mode DRX Battery Sleep Efficiency",
+        category: "Advanced Features",
+        sentence: "<strong>DRX_EFF</strong> measures the percentage of subframes user equipment remains in micro-sleep states during active sessions on low-band carriers.",
+        sentences3: [
+          "Connected-mode Discontinuous Reception (C-DRX) enables mobile devices to turn off their RF receivers when data is not scheduled.",
+          "EMS analyzes DRX sleep duration to verify that background apps and chat pings do not prevent devices from entering low-power sleep states.",
+          "Achieving DRX sleep efficiency above 70% during active connected sessions prolongs user device battery life on 700/800 MHz networks."
+        ],
+        schematicType: "prb",
+        target: "> 70% sleep opportunity utilization",
+        formula: "(DRX_Inactive_Subframes / Total_Connected_Subframes) * 100"
+      },
+      {
+        id: 96,
+        code: "BF_CORR",
+        name: "8T8R Low-Band Beamforming Correlation",
+        category: "Advanced Features",
+        sentence: "<strong>BF_CORR</strong> quantifies phase coherence and beam-weight accuracy across multi-column 8T8R low-band antenna arrays.",
+        sentences3: [
+          "Deploying 8-transmitter 8-receiver beamforming in 700/800 MHz enhances cell-edge uplink reception and sharpens downlink sector energy.",
+          "EMS monitors beamforming weight calibration logs to detect phase drift caused by sun-induced cable expansion or radio hardware phase shifts.",
+          "A correlation index above 0.90 ensures sharp beam patterns that boost edge SINR by 3 to 4 dB."
+        ],
+        schematicType: "sinr",
+        target: "≥ 0.92 Coherence Index",
+        formula: "Vector_Inner_Product(Actual_Beam_Weights, Ideal_Weights)"
+      },
+      {
+        id: 97,
+        code: "B14_PREEMP",
+        name: "FirstNet Band 14 Public Safety Preemption Rate",
+        category: "Advanced Features",
+        sentence: "<strong>B14_PREEMP</strong> measures the frequency with which commercial users are preempted or relocated to grant immediate capacity to emergency first responders.",
+        sentences3: [
+          "In 700 MHz Band 14 networks, Allocation and Retention Priority (ARP) settings enforce hard preemption against commercial traffic during emergencies.",
+          "EMS monitors preemption events to confirm that police, fire, and medical teams receive immediate, contention-free bearer activation.",
+          "Preemption execution logs verify that commercial subscribers are redirected cleanly to non-public safety carrier layers."
+        ],
+        schematicType: "protocol",
+        target: "100% successful preemption of commercial users",
+        formula: "(Successful_Emergency_Preemptions / Triggered_Preemptions) * 100"
+      },
+      {
+        id: 98,
+        code: "PWR_SAVE_R",
+        name: "Cell Sleep Mode Energy Savings Ratio",
+        category: "Advanced Features",
+        sentence: "<strong>PWR_SAVE_R</strong> calculates base station power reduction achieved during deep-night hours by deactivating power amplifier stages.",
+        sentences3: [
+          "During early morning hours, base station software can place RF transceiver chains and power amplifier rails into micro-sleep modes.",
+          "EMS tracks daily energy savings while ensuring that cell wake-up latency does not exceed 10 milliseconds when new emergency access arrives.",
+          "Advanced low-band sleep features reduce tower power consumption by 15% to 30% during low-traffic overnight periods."
+        ],
+        schematicType: "power",
+        target: "15% - 30% reduction during off-peak hours",
+        formula: "(Baseline_kWh - EcoMode_kWh) / Baseline_kWh * 100"
+      },
+      {
+        id: 99,
+        code: "BARR_EVT",
+        name: "Cell Barring & Congestion Throttling Rate",
+        category: "Advanced Features",
+        sentence: "<strong>BARR_EVT</strong> tracks occurrences where a 700/800 MHz cell sector broadcasts 'cellBarred' in System Information Block 1 (SIB1) to repel incoming traffic.",
+        sentences3: [
+          "When severe backhaul cuts or baseband failures strike, the cell bars itself to force mobile devices to camp on alternative frequencies or neighbor towers.",
+          "EMS monitors barring events to prevent whole geographical areas from being locked out without automatic site alarms.",
+          "In normal operations, BARR_EVT should remain at zero except during controlled maintenance and antenna testing windows."
+        ],
+        schematicType: "protocol",
+        target: "0 unexpected barring events",
+        formula: "Count(SIB1_CellBarred == True)"
+      },
+      {
+        id: 100,
+        code: "HST_DOPP",
+        name: "High-Speed Train Doppler Shift Compensation Rate",
+        category: "Advanced Features",
+        sentence: "<strong>HST_DOPP</strong> monitors base station tracking and frequency offset compensation for mobile devices traveling at high velocities along rail corridors.",
+        sentences3: [
+          "At speeds exceeding 300 km/h, 700/800 MHz carriers experience Doppler shifts up to ±200 Hz that can cause subcarrier inter-carrier interference.",
+          "EMS evaluates automatic frequency control (AFC) tracking algorithms designed to maintain subcarrier orthogonality on transit corridors.",
+          "Effective Doppler compensation keeps BLER below 10% on high-speed rail lines, sustaining smooth voice and broadband connectivity."
+        ],
+        schematicType: "spectrum",
+        target: "< 50 Hz residual frequency error at 300 km/h",
+        formula: "Delta_f = (v / c) * f0 * cos(theta)"
+      }
+    ];
+
+    let currentSearch = "";
+    let currentCategory = "All";
+
+    const categories = ["All", "Coverage", "Accessibility", "Retainability", "Mobility", "Interference", "Uplink", "Capacity", "Throughput", "Hardware", "Advanced Features"];
+
+    // Category badge color mapping
+    function getCategoryColorClass(category) {
+      switch(category) {
+        case "Coverage": return "bg-cyan-950/80 text-cyan-300 border-cyan-800";
+        case "Accessibility": return "bg-emerald-950/80 text-emerald-300 border-emerald-800";
+        case "Retainability": return "bg-rose-950/80 text-rose-300 border-rose-800";
+        case "Mobility": return "bg-purple-950/80 text-purple-300 border-purple-800";
+        case "Interference": return "bg-amber-950/80 text-amber-300 border-amber-800";
+        case "Uplink": return "bg-blue-950/80 text-blue-300 border-blue-800";
+        case "Capacity": return "bg-indigo-950/80 text-indigo-300 border-indigo-800";
+        case "Throughput": return "bg-teal-950/80 text-teal-300 border-teal-800";
+        case "Hardware": return "bg-orange-950/80 text-orange-300 border-orange-800";
+        case "Advanced Features": return "bg-pink-950/80 text-pink-300 border-pink-800";
+        default: return "bg-slate-800 text-slate-300 border-slate-700";
+      }
+    }
+
+    function renderCategories() {
+      const container = document.getElementById('categoryContainer');
+      container.innerHTML = "";
+      
+      categories.forEach(cat => {
+        const count = cat === "All" ? KPI_DATABASE.length : KPI_DATABASE.filter(k => k.category === cat).length;
+        const btn = document.createElement('button');
+        btn.className = `px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
+          currentCategory === cat 
+            ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/30' 
+            : 'bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+        }`;
+        btn.innerHTML = `<span>${cat}</span> <span class="text-[10px] px-1.5 py-0.2 rounded-full ${currentCategory === cat ? 'bg-slate-900/40 text-slate-950 font-mono' : 'bg-slate-800 text-slate-400 font-mono'}">${count}</span>`;
+        btn.onclick = () => {
+          currentCategory = cat;
+          renderCategories();
+          renderKPIList();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderKPIList() {
+      const listEl = document.getElementById('kpiList');
+      const noResults = document.getElementById('noResults');
+      const statActive = document.getElementById('statActiveCount');
+
+      const filtered = KPI_DATABASE.filter(item => {
+        const matchesCategory = currentCategory === "All" || item.category === currentCategory;
+        const q = currentSearch.toLowerCase().trim();
+        const matchesSearch = !q || 
+          item.code.toLowerCase().includes(q) || 
+          item.name.toLowerCase().includes(q) || 
+          item.sentence.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q);
+        return matchesCategory && matchesSearch;
+      });
+
+      statActive.textContent = `${filtered.length} Shown`;
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = "";
+        noResults.classList.remove('hidden');
+        return;
+      }
+
+      noResults.classList.add('hidden');
+
+      let html = "";
+      filtered.forEach(kpi => {
+        const catBadgeClass = getCategoryColorClass(kpi.category);
+        html += `
+          <div 
+            onclick="openKpiModal(${kpi.id})" 
+            class="group bg-slate-900/70 hover:bg-slate-850 border border-slate-800 hover:border-cyan-500/50 rounded-xl p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between hover:shadow-lg hover:shadow-cyan-950/20 active:scale-[0.99] relative overflow-hidden"
+          >
+            <!-- Top Card Row -->
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-mono text-xs font-bold text-slate-500">#${String(kpi.id).padStart(3, '0')}</span>
+                <span class="px-2 py-0.5 text-xs font-mono font-bold bg-slate-950 border border-slate-700 text-cyan-400 rounded-md tracking-wide group-hover:border-cyan-500 transition-colors">
+                  ${kpi.code}
+                </span>
+                <span class="text-sm font-semibold text-slate-100 group-hover:text-cyan-200 transition-colors">
+                  ${kpi.name}
+                </span>
+              </div>
+              <span class="px-2 py-0.5 text-[11px] font-medium border rounded-full ${catBadgeClass} shrink-0">
+                ${kpi.category}
+              </span>
+            </div>
+
+            <!-- Single Sentence Description with Bold Acronym -->
+            <p class="text-xs sm:text-[13px] leading-relaxed text-slate-300 group-hover:text-slate-200 mt-1 mb-3">
+              ${kpi.sentence}
+            </p>
+
+            <!-- Card Bottom Hint / Target -->
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 font-mono">
+              <span class="truncate max-w-[210px] text-slate-500">Target: <strong class="text-slate-300">${kpi.target.split('/')[0]}</strong></span>
+              <span class="text-cyan-400 font-sans group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-medium text-[11px]">
+                Inspect Preview
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </span>
+            </div>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+    }
+
+    function generateSchematicSvg(type, kpi) {
+      switch(type) {
+        case "curve":
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none">
+              <!-- Grid lines -->
+              <line x1="50" y1="20" x2="470" y2="20" stroke="#1e293b" stroke-dasharray="3 3"/>
+              <line x1="50" y1="60" x2="470" y2="60" stroke="#1e293b" stroke-dasharray="3 3"/>
+              <line x1="50" y1="100" x2="470" y2="100" stroke="#1e293b" stroke-dasharray="3 3"/>
+              <line x1="50" y1="135" x2="470" y2="135" stroke="#334155" stroke-width="1.5"/>
+              <line x1="50" y1="15" x2="50" y2="135" stroke="#334155" stroke-width="1.5"/>
+              
+              <!-- Axes Labels -->
+              <text x="45" y="25" fill="#64748b" font-family="monospace" font-size="9" text-anchor="end">-70 dBm</text>
+              <text x="45" y="65" fill="#64748b" font-family="monospace" font-size="9" text-anchor="end">-95 dBm</text>
+              <text x="45" y="105" fill="#64748b" font-family="monospace" font-size="9" text-anchor="end">-115 dBm</text>
+              <text x="470" y="148" fill="#64748b" font-family="monospace" font-size="9" text-anchor="end">Distance (km) ➔</text>
+              <text x="50" y="12" fill="#06b6d4" font-family="monospace" font-size="10" font-weight="bold">${kpi.code} Coverage Propagation Profile</text>
+
+              <!-- 700/800MHz Low-Band Curve (Cyan) -->
+              <path d="M 50 30 Q 150 45, 260 75 T 460 115" fill="none" stroke="#06b6d4" stroke-width="2.5"/>
+              <text x="410" y="100" fill="#06b6d4" font-family="sans-serif" font-size="9" font-weight="bold">700/800 MHz (Low-Band)</text>
+
+              <!-- High-band 2100MHz Curve for Comparison (Red dotted) -->
+              <path d="M 50 35 Q 120 70, 200 110 T 320 135" fill="none" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <text x="240" y="130" fill="#f43f5e" font-family="sans-serif" font-size="8">Mid-Band 2.1 GHz (Steep drop)</text>
+
+              <!-- Handover / Edge threshold marker -->
+              <line x1="320" y1="15" x2="320" y2="135" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="2 2"/>
+              <circle cx="320" cy="88" r="4" fill="#f59e0b"/>
+              <text x="325" y="45" fill="#f59e0b" font-family="monospace" font-size="8.5">Critical Edge Boundary</text>
+            </svg>
+          `;
+
+        case "spectrum":
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none">
+              <!-- Spectrum Display Graticule -->
+              <rect x="40" y="15" width="430" height="120" fill="#030712" stroke="#1e293b"/>
+              <line x1="40" y1="45" x2="470" y2="45" stroke="#1e293b" stroke-dasharray="2 2"/>
+              <line x1="40" y1="75" x2="470" y2="75" stroke="#1e293b" stroke-dasharray="2 2"/>
+              <line x1="40" y1="105" x2="470" y2="105" stroke="#1e293b" stroke-dasharray="2 2"/>
+              <line x1="147" y1="15" x2="147" y2="135" stroke="#1e293b" stroke-dasharray="2 2"/>
+              <line x1="255" y1="15" x2="255" y2="135" stroke="#1e293b" stroke-dasharray="2 2"/>
+              <line x1="362" y1="15" x2="362" y2="135" stroke="#1e293b" stroke-dasharray="2 2"/>
+
+              <!-- Baseline Noise floor trace -->
+              <path d="M 40 120 L 70 122 L 95 119 L 130 121 L 160 120 L 190 121 L 210 120 L 230 65 L 245 42 L 260 40 L 275 62 L 290 120 L 330 122 L 370 119 L 410 121 L 470 120" fill="rgba(6, 182, 212, 0.15)" stroke="#06b6d4" stroke-width="1.8"/>
+
+              <!-- Interference Spike (PIM/Jammer/Harmonic) -->
+              <path d="M 230 120 L 245 42 L 260 40 L 275 62 L 290 120" fill="rgba(244, 63, 94, 0.3)" stroke="#f43f5e" stroke-width="2"/>
+              
+              <!-- Frequency Labels -->
+              <text x="45" y="148" fill="#64748b" font-family="monospace" font-size="8.5">703 MHz</text>
+              <text x="255" y="148" fill="#06b6d4" font-family="monospace" font-size="9" text-anchor="middle">Fc: 710 MHz Uplink</text>
+              <text x="465" y="148" fill="#64748b" font-family="monospace" font-size="8.5" text-anchor="end">718 MHz</text>
+              
+              <text x="260" y="32" fill="#f43f5e" font-family="sans-serif" font-size="9" font-weight="bold" text-anchor="middle">PIM / Noise Ingress Spike</text>
+              <text x="45" y="112" fill="#10b981" font-family="monospace" font-size="8">Thermal Noise Floor (-106 dBm)</text>
+            </svg>
+          `;
+
+        case "vswr":
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none">
+              <!-- Base Station Radio Head (RRU) -->
+              <rect x="30" y="55" width="70" height="50" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+              <text x="65" y="80" fill="#06b6d4" font-family="sans-serif" font-size="9" font-weight="bold" text-anchor="middle">700MHz RRU</text>
+              <text x="65" y="93" fill="#94a3b8" font-family="monospace" font-size="7.5" text-anchor="middle">40W Tx / Rx</text>
+
+              <!-- Coaxial Feeder / Jumper -->
+              <line x1="100" y1="80" x2="350" y2="80" stroke="#475569" stroke-width="4"/>
+              <text x="220" y="72" fill="#94a3b8" font-family="monospace" font-size="8" text-anchor="middle">7/8" RF Coax / Jumper</text>
+
+              <!-- Wave Vectors (Forward vs Reflected) -->
+              <path d="M 120 62 L 200 62" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>
+              <text x="160" y="56" fill="#10b981" font-family="sans-serif" font-size="8" font-weight="bold">Forward Wave (P_fwd)</text>
+
+              <path d="M 280 98 L 200 98" stroke="#f43f5e" stroke-width="1.8"/>
+              <text x="240" y="112" fill="#f43f5e" font-family="sans-serif" font-size="8" font-weight="bold">Reflected Wave (P_ref)</text>
+
+              <!-- Antenna Mast and Panel -->
+              <rect x="350" y="30" width="30" height="100" rx="4" fill="#334155" stroke="#f59e0b" stroke-width="1.5"/>
+              <line x1="380" y1="40" x2="430" y2="25" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <line x1="380" y1="80" x2="445" y2="80" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <line x1="380" y1="120" x2="430" y2="135" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <text x="365" y="145" fill="#f59e0b" font-family="sans-serif" font-size="8.5" text-anchor="middle">Antenna</text>
+
+              <!-- Status Box -->
+              <rect x="180" y="125" width="90" height="24" rx="4" fill="#022c22" stroke="#10b981"/>
+              <text x="225" y="141" fill="#34d399" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle">VSWR = 1.15 : 1</text>
+            </svg>
+          `;
+
+        case "handover":
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none">
+              <!-- Serving 700MHz Sector Arc -->
+              <circle cx="90" cy="80" r="75" fill="rgba(6, 182, 212, 0.08)" stroke="#06b6d4" stroke-width="1.5"/>
+              <text x="90" y="80" fill="#06b6d4" font-family="sans-serif" font-size="10" font-weight="bold" text-anchor="middle">700MHz Source</text>
+              <text x="90" y="93" fill="#64748b" font-family="monospace" font-size="8" text-anchor="middle">(Serving Cell)</text>
+
+              <!-- Target Sector Arc (Mid-Band or Adjacent 700) -->
+              <circle cx="390" cy="80" r="75" fill="rgba(168, 85, 247, 0.08)" stroke="#a855f7" stroke-width="1.5"/>
+              <text x="390" y="80" fill="#a855f7" font-family="sans-serif" font-size="10" font-weight="bold" text-anchor="middle">Target Cell</text>
+              <text x="390" y="93" fill="#64748b" font-family="monospace" font-size="8" text-anchor="middle">(Candidate)</text>
+
+              <!-- Handover Overlap Zone -->
+              <rect x="200" y="25" width="80" height="110" rx="8" fill="rgba(245, 158, 11, 0.12)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <text x="240" y="45" fill="#f59e0b" font-family="sans-serif" font-size="9" font-weight="bold" text-anchor="middle">HO Margin</text>
+              <text x="240" y="60" fill="#f59e0b" font-family="monospace" font-size="8" text-anchor="middle">A3/A5 Event</text>
+
+              <!-- Moving UE Vehicle Vector -->
+              <circle cx="230" cy="95" r="5" fill="#10b981"/>
+              <line x1="160" y1="95" x2="310" y2="95" stroke="#10b981" stroke-width="1.8" stroke-dasharray="3 2"/>
+              <text x="230" y="115" fill="#10b981" font-family="sans-serif" font-size="8.5" font-weight="bold" text-anchor="middle">UE Direction ➔</text>
+            </svg>
+          `;
+
+        case "protocol":
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none font-mono">
+              <!-- Columns: UE and eNB/gNB -->
+              <line x1="100" y1="20" x2="100" y2="145" stroke="#475569" stroke-width="1.5"/>
+              <line x1="400" y1="20" x2="400" y2="145" stroke="#475569" stroke-width="1.5"/>
+              <text x="100" y="15" fill="#06b6d4" font-size="9.5" font-weight="bold" text-anchor="middle">User Equipment (UE)</text>
+              <text x="400" y="15" fill="#10b981" font-size="9.5" font-weight="bold" text-anchor="middle">700/800MHz Base Station</text>
+
+              <!-- Message 1: RACH Preamble -->
+              <line x1="105" y1="40" x2="395" y2="48" stroke="#06b6d4" stroke-width="1.5"/>
+              <text x="250" y="40" fill="#06b6d4" font-size="8" text-anchor="middle">1. RACH Preamble (Msg1)</text>
+
+              <!-- Message 2: RAR -->
+              <line x1="395" y1="65" x2="105" y2="73" stroke="#10b981" stroke-width="1.5"/>
+              <text x="250" y="65" fill="#10b981" font-size="8" text-anchor="middle">2. Random Access Response (Msg2)</text>
+
+              <!-- Message 3: RRC Connection Request -->
+              <line x1="105" y1="90" x2="395" y2="98" stroke="#f59e0b" stroke-width="1.5"/>
+              <text x="250" y="90" fill="#f59e0b" font-size="8" text-anchor="middle">3. RRC Setup Request / Msg3</text>
+
+              <!-- Message 4: RRC Setup & CR -->
+              <line x1="395" y1="115" x2="105" y2="123" stroke="#10b981" stroke-width="1.5"/>
+              <text x="250" y="115" fill="#10b981" font-size="8" text-anchor="middle">4. Contention Resolution / Setup (Msg4)</text>
+
+              <!-- Status Badge -->
+              <text x="250" y="142" fill="#38bdf8" font-size="8.5" font-weight="bold" text-anchor="middle">Active Radio Bearer Established</text>
+            </svg>
+          `;
+
+        case "prb":
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none">
+              <!-- PRB Matrix Grid (Time vs Frequency) -->
+              <text x="45" y="18" fill="#06b6d4" font-family="monospace" font-size="9" font-weight="bold">700MHz 10 MHz Carrier Resource Grid (50 PRBs)</text>
+              
+              <!-- Frequency Axis -->
+              <line x1="50" y1="28" x2="50" y2="135" stroke="#475569" stroke-width="1.5"/>
+              <text x="42" y="35" fill="#64748b" font-family="monospace" font-size="7.5" text-anchor="end">PRB 49</text>
+              <text x="42" y="85" fill="#64748b" font-family="monospace" font-size="7.5" text-anchor="end">PRB 25</text>
+              <text x="42" y="132" fill="#64748b" font-family="monospace" font-size="7.5" text-anchor="end">PRB 0</text>
+              
+              <!-- Time Axis -->
+              <line x1="50" y1="135" x2="470" y2="135" stroke="#475569" stroke-width="1.5"/>
+              <text x="260" y="148" fill="#64748b" font-family="monospace" font-size="8" text-anchor="middle">Time Subframes (1 ms slots) ➔</text>
+
+              <!-- PRB Allocation Blocks -->
+              <!-- Control Channels (PUCCH at edges) -->
+              <rect x="55" y="30" width="405" height="12" fill="#f43f5e" opacity="0.8"/>
+              <text x="260" y="39" fill="#ffffff" font-family="sans-serif" font-size="7" font-weight="bold" text-anchor="middle">PUCCH Control Edge</text>
+              <rect x="55" y="121" width="405" height="12" fill="#f43f5e" opacity="0.8"/>
+              <text x="260" y="130" fill="#ffffff" font-family="sans-serif" font-size="7" font-weight="bold" text-anchor="middle">PUCCH Control Edge</text>
+
+              <!-- User Data Allocations (PDSCH/PUSCH) -->
+              <rect x="70" y="46" width="110" height="30" rx="3" fill="#0284c7" opacity="0.8"/>
+              <text x="125" y="64" fill="#ffffff" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">VoLTE QCI-1</text>
+
+              <rect x="190" y="46" width="150" height="50" rx="3" fill="#10b981" opacity="0.8"/>
+              <text x="265" y="74" fill="#ffffff" font-family="sans-serif" font-size="8.5" font-weight="bold" text-anchor="middle">eMBB Data (64QAM)</text>
+
+              <rect x="350" y="70" width="105" height="48" rx="3" fill="#8b5cf6" opacity="0.8"/>
+              <text x="402" y="97" fill="#ffffff" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">IoT / Best Effort</text>
+            </svg>
+          `;
+
+        case "power":
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none">
+              <!-- Power Headroom Limitation Diagram -->
+              <text x="45" y="18" fill="#f59e0b" font-family="monospace" font-size="9" font-weight="bold">Uplink Power Budget vs Cell Edge Distance</text>
+              
+              <line x1="50" y1="28" x2="460" y2="28" stroke="#334155" stroke-dasharray="2 2"/>
+              <text x="45" y="32" fill="#f43f5e" font-family="monospace" font-size="8" text-anchor="end">23 dBm (Max UE Tx)</text>
+
+              <line x1="50" y1="130" x2="460" y2="130" stroke="#475569" stroke-width="1.5"/>
+              <line x1="50" y1="20" x2="50" y2="130" stroke="#475569" stroke-width="1.5"/>
+
+              <!-- Power Curve -->
+              <path d="M 50 115 Q 200 100, 310 65 T 400 30 L 460 30" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+
+              <!-- Saturation Zone -->
+              <rect x="390" y="20" width="70" height="110" fill="rgba(244, 63, 94, 0.15)" stroke="#f43f5e" stroke-dasharray="2 2"/>
+              <text x="425" y="70" fill="#f43f5e" font-family="sans-serif" font-size="8" font-weight="bold" text-anchor="middle">PHR ≤ 0 dB</text>
+              <text x="425" y="82" fill="#f43f5e" font-family="sans-serif" font-size="7.5" text-anchor="middle">(Power Starved)</text>
+
+              <!-- Positive Headroom Zone -->
+              <text x="180" y="70" fill="#10b981" font-family="sans-serif" font-size="8.5" font-weight="bold">Positive Power Headroom (PHR > 10 dB)</text>
+              <text x="450" y="142" fill="#64748b" font-family="monospace" font-size="8" text-anchor="end">Cell Radius ➔</text>
+            </svg>
+          `;
+
+        case "distance":
+        default:
+          return `
+            <svg viewBox="0 0 500 160" class="w-full h-40 bg-slate-950 rounded-lg select-none">
+              <!-- Macro Tower Cell Footprint Concentric Rings -->
+              <circle cx="100" cy="80" r="25" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+              <circle cx="100" cy="80" r="55" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <circle cx="100" cy="80" r="85" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3"/>
+              
+              <!-- Tower Icon -->
+              <circle cx="100" cy="80" r="4" fill="#06b6d4"/>
+              <text x="100" y="70" fill="#06b6d4" font-family="sans-serif" font-size="8.5" font-weight="bold" text-anchor="middle">700MHz Site</text>
+
+              <!-- Ring Labels -->
+              <text x="100" y="112" fill="#10b981" font-family="monospace" font-size="7">TA 0-5 (&lt;3km)</text>
+              <text x="100" y="142" fill="#f59e0b" font-family="monospace" font-size="7">TA 15-30 (~12km)</text>
+
+              <!-- Technical Explanation Overlay -->
+              <rect x="220" y="30" width="250" height="95" rx="6" fill="#0f172a" stroke="#334155"/>
+              <text x="235" y="52" fill="#38bdf8" font-family="sans-serif" font-size="9" font-weight="bold">Propagation Radius Characteristics</text>
+              <text x="235" y="72" fill="#94a3b8" font-family="sans-serif" font-size="8">• Speed of Light (c) = 300,000 km/s</text>
+              <text x="235" y="88" fill="#94a3b8" font-family="sans-serif" font-size="8">• 1 TA Step = 16 × Ts ≈ 78.12 meters resolution</text>
+              <text x="235" y="104" fill="#f59e0b" font-family="sans-serif" font-size="8">• 700/800MHz covers up to 35 km before CP limits</text>
+            </svg>
+          `;
+      }
+    }
+
+    function openKpiModal(id) {
+      const kpi = KPI_DATABASE.find(item => item.id === id);
+      if (!kpi) return;
+
+      document.getElementById('modalIdBadge').textContent = `#${String(kpi.id).padStart(3, '0')}`;
+      document.getElementById('modalAcronymBadge').textContent = kpi.code;
+      document.getElementById('modalCategoryBadge').textContent = kpi.category;
+      document.getElementById('modalTitle').textContent = kpi.name;
+
+      // Render 3 sentences
+      const sentencesContainer = document.getElementById('modal3Sentences');
+      sentencesContainer.innerHTML = kpi.sentences3.map((s, idx) => `
+        <div class="flex items-start gap-2.5">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-cyan-950 text-cyan-400 text-xs font-mono font-bold shrink-0 border border-cyan-800">
+            ${idx + 1}
+          </span>
+          <p class="leading-relaxed">${s}</p>
+        </div>
+      `).join('');
+
+      // Render Schematic SVG
+      const schematicContainer = document.getElementById('modalSchematicContainer');
+      schematicContainer.innerHTML = generateSchematicSvg(kpi.schematicType, kpi);
+
+      // Render Target and Formula
+      document.getElementById('modalTarget').textContent = kpi.target;
+      document.getElementById('modalFormula').textContent = kpi.formula;
+
+      // Show modal
+      const modal = document.getElementById('kpiModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.firstElementChild.classList.remove('scale-95');
+      }, 10);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('kpiModal');
+      modal.classList.add('opacity-0');
+      modal.firstElementChild.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }, 200);
+    }
+
+    function resetFilters() {
+      currentSearch = "";
+      currentCategory = "All";
+      document.getElementById('searchInput').value = "";
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      renderCategories();
+      renderKPIList();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCategories();
+      renderKPIList();
+
+      const searchInput = document.getElementById('searchInput');
+      const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+      searchInput.addEventListener('input', (e) => {
+        currentSearch = e.target.value;
+        if (currentSearch.trim().length > 0) {
+          clearSearchBtn.classList.remove('hidden');
+        } else {
+          clearSearchBtn.classList.add('hidden');
+        }
+        renderKPIList();
+      });
+
+      clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = "";
+        currentSearch = "";
+        clearSearchBtn.classList.add('hidden');
+        renderKPIList();
+        searchInput.focus();
+      });
+
+      // Modal close events
+      document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+      document.getElementById('kpiModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('kpiModal')) {
+          closeModal();
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
